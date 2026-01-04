@@ -1,0 +1,160 @@
+---
+title: SWITCH
+---
+
+# SWITCH
+
+`SWITCH` is the **userspace interface** to the Lichee-Jack **hardware mode switch**.
+
+It reads the current position of the onboard **SP3T physical switch** via the kernel driver `mod-switch` and prints a **normalized identifier** used by higher-level logic such as `jackstart` and `RUN`.
+
+---
+
+## Overview
+
+Lichee-Jack includes a physical **SP3T mode switch** wired to two GPIO pins on the CV181x SoC. The switch allows selecting different operating modes **without software interaction**, making the device usable in fully headless scenarios.
+
+The stack is intentionally simple:
+
+```
+[ SP3T Switch ]
+        │
+        ▼
+[ mod-switch kernel driver ]
+        │  (/dev/modsw)
+        ▼
+[ SWITCH userspace helper ]
+        │
+        ▼
+[ jackstart / RUN / payloads ]
+```
+
+---
+
+## Output Format
+
+Running `SWITCH` prints a single line:
+
+```
+switch1
+```
+
+or
+
+```
+switch2
+```
+
+This normalized format avoids leaking raw numeric values into higher-level scripts.
+
+---
+
+## Usage
+
+```sh
+SWITCH
+```
+
+Example:
+
+```sh
+root@licheejack:~# SWITCH
+switch1
+```
+
+---
+
+## Mapping
+
+| Physical Switch | `/dev/modsw` | SWITCH Output      |
+| --------------- | ------------ | ------------------ |
+| Position 1      | `1`          | `switch1`          |
+| Position 2      | `2`          | `switch2`          |
+| Invalid / Idle  | `0`          | `switch0` (unused) |
+
+> In normal operation, only `switch1` and `switch2` are used.
+
+---
+
+## Kernel Driver: `mod-switch`
+
+The `mod-switch` driver is a **custom in-tree kernel module** located at:
+
+```
+drivers/misc/mod-switch.c
+```
+
+### Key Characteristics
+
+* Exposes a misc character device: `/dev/modsw`
+* Polls GPIO state every **20 ms** using a kernel thread
+* Reports switch state as ASCII `'0'`, `'1'`, or `'2'`
+* Minimal memory and CPU usage
+
+---
+
+## GPIO Wiring
+
+| GPIO     | SoC Pin           | Description   |
+| -------- | ----------------- | ------------- |
+| GPIOA_15 | SPK_EN (muxed)    | Switch line A |
+| GPIOA_24 | EMMC_DAT1 (muxed) | Switch line B |
+
+Internal pull-ups are configured in the driver to ensure stable readings.
+
+---
+
+## Driver Logic
+
+The switch position is derived from GPIO combinations:
+
+| GPIOA_15 | GPIOA_24 | State         |
+| -------- | -------- | ------------- |
+| 0        | 1        | `1` (switch1) |
+| 1        | 0        | `2` (switch2) |
+| other    | other    | `0` (invalid) |
+
+This mapping tolerates invalid or floating states safely.
+
+---
+
+## Userspace Implementation
+
+The `SWITCH` utility simply reads one byte from `/dev/modsw` and formats it:
+
+* No caching
+* No polling
+* No side effects
+
+This makes it safe to call repeatedly from scripts.
+
+---
+
+## Integration
+
+* Invoked by `jackstart` during boot
+* Selects payload mode for `RUN`
+* Can be used directly in shell scripts
+* Works alongside `NETMODE`, `LED`, and other utilities
+
+Typical flow:
+
+```
+mode=$(SWITCH)
+RUN "$mode"
+```
+
+---
+
+## Limitations
+
+* Polling-based (not interrupt-driven)
+* Fixed polling interval (20 ms)
+* Only supports the onboard SP3T switch
+
+These trade-offs are intentional for simplicity and robustness.
+
+---
+
+`SWITCH` represents the **hardware truth source** of Lichee-Jack: simple, physical, and reliable.
+

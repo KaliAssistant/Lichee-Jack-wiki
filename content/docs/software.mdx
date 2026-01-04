@@ -1,0 +1,90 @@
+---
+asIndexPage: true
+---
+
+import { Cards, Image } from 'nextra/components'
+
+# Software
+
+This section documents the **software architecture, build system, and core runtime features** of **Lichee-Jack**.
+It is intended for developers, researchers, and advanced users who want to **understand, customize, or extend** the system.
+
+You can explore how the operating system is structured, how firmware images are built from source, and how Lichee-Jack exposes its core capabilities through scripts, services, and utilities.
+
+---
+
+## System
+
+Lichee-Jack runs on **Debian GNU/Linux**, customized for embedded usage on the LicheeRV Nano platform.
+
+This section covers:
+
+* Linux distribution layout and filesystem structure
+* Init system and boot flow
+* Hardware abstraction and device drivers
+* Default services and security considerations
+
+<Cards num={1}>
+  <Cards.Card arrow title="System" href="/docs/software/1_system">
+  </Cards.Card>
+</Cards>
+
+---
+
+## Build Image
+
+Lichee-Jack images are **built from source**, allowing full control over the kernel, root filesystem, and included tools.
+
+This section covers:
+
+* Toolchains and build environment setup
+* Kernel configuration and module selection
+* Root filesystem customization
+* Image generation, flashing, and upgrade workflow
+
+This is recommended for users who want to:
+
+* Enable or disable kernel features
+* Add custom tools or payloads
+* Optimize image size or boot speed
+
+<Cards num={1}>
+  <Cards.Card arrow title="Build Image" href="/docs/software/2_build_image">
+  </Cards.Card>
+</Cards>
+
+---
+
+## Utilities
+
+Utilities are the **runtime components** that make Lichee-Jack behave like a modular attack / automation platform.
+
+This section covers:
+
+* System scripts and boot-time logic
+* Init / service units
+* Mode switch handling and payload dispatch
+* Built-in utilities and helper tools
+
+These components allow Lichee-Jack to:
+
+* React to hardware state changes
+* Switch behavior using the mode selector
+* Execute user-defined payloads reliably
+
+<Cards num={1}>
+  <Cards.Card arrow title="Utilities" href="/docs/software/3_utilities">
+  </Cards.Card>
+</Cards>
+
+---
+
+## Who should read this section?
+
+* Embedded Linux developers
+* Red Team / Blue Team / Security researchers
+* Payload authors and automation users
+* Anyone who wants full control over Lichee-Jack
+
+This documentation assumes basic familiarity with Linux and embedded systems.
+

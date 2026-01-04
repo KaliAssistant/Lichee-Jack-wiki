@@ -1,0 +1,65 @@
+---
+title: USB OTG
+---
+
+# USB OTG
+
+Lichee-Jack uses the **LicheeRV-Nano SoC (sg2002) USB 2.0 OTG controller** and primarily operates in **USB gadget (device) mode**. This allows Lichee-Jack to present itself to a host computer as different USB devices such as Ethernet, Serial, HID, or Mass Storage.
+
+## Features
+
+* USB 2.0 OTG (Device / Gadget mode)
+* Compatible with Linux USB Gadget framework
+* Supports composite gadgets (multiple functions at once)
+* Designed for payload-style workflows (plug & run)
+
+## OTG Role Initialization
+
+During early system initialization, the OTG role must be forced to **device** mode.
+
+Add the following command to your init sequence:
+
+```sh
+echo "device" > /proc/cviusb/otg_role
+```
+
+This ensures the USB controller always enumerates as a **USB device** when connected to a host.
+
+## Gadget Management
+
+Lichee-Jack uses **linux-usb-gadgets/gt** as a lightweight gadget loader and manager.
+
+`gt` is a simple userspace tool that:
+
+* Uses **ConfigFS** to configure USB gadgets
+* Loads gadgets from a **modern, declarative configuration file**
+* Supports multiple gadget functions in one device
+
+Repository:
+
+* GitHub: [linux-usb-gadgets/gt](https://github.com/linux-usb-gadgets/gt)
+
+## Supported Gadget Functions
+
+Depending on the configuration, Lichee-Jack can expose:
+
+* **CDC ACM** – USB serial console
+* **CDC ECM / NCM** – USB Ethernet
+* **HID** – Keyboard / Mouse payloads
+* **Mass Storage** – Disk image emulation
+
+These can be combined into a **single composite USB device**.
+
+## Example Workflow
+
+1. System boots in **Mode 0 (Debug)**
+2. OTG role is forced to `device`
+3. `gt` loads the gadget configuration
+4. Host PC detects Lichee-Jack as a USB device
+5. Payload services start automatically
+
+## Notes
+
+* Host-side drivers are usually **not required** (CDC / HID are class-compliant)
+* USB gadget behavior can be switched dynamically via **Mode Switch payloads**
+

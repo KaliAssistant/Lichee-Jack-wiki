@@ -1,0 +1,153 @@
+---
+title: Flash Image
+---
+
+# Flash Image
+
+This guide explains how to prepare an SD card and flash the **Lichee-Jack** system image.
+
+---
+
+## 1. Prepare an SD Card
+
+Lichee-Jack boots **only from an SD card**. It does **not** use on-board SPI flash or eMMC. This makes the system easy to wipe, reflash, and recover.
+
+### SD Card Requirements
+
+* Interface: **SD / SDHC**
+* Speed class: **Class 10** (minimum write speed 10 MB/s)
+* Capacity: **16–32 GB** is sufficient
+
+> [!NOTE]
+>
+> The main PCB (LicheeRV-Nano board) configures SDIO with a **maximum stable frequency of 25 MHz** in the device tree. Although 50 MHz may appear to work, it often causes instability or card detection failures.
+
+### Recommended Cards
+
+High-end or expensive cards are unnecessary.
+
+* ✅ SanDisk **Ultra** / **Ultra A1**
+* ❌ Extreme / A2 cards (no real benefit here)
+
+**Recommended example:**
+
+* SanDisk Ultra 32GB Class 10 SDHC I
+
+![](/assets/sandisk_ultra.png)
+
+---
+
+## 2. Download the Prebuilt Image
+
+1. Go to the GitHub releases page:
+
+   **KaliAssistant / Lichee-Jack**
+
+2. Download:
+
+   * The **latest system image** (`.img`)
+   * The corresponding **checksum file**
+
+3. Verify the image checksum (**important!**):
+
+```bash
+sha256sum Lichee-Jack-*.img
+```
+
+Compare the output with the checksum provided in the release.
+
+> [!WARNING]
+>
+> Do **not** skip checksum verification. A corrupted image can lead to boot failures or undefined behavior.
+
+---
+
+## 3. Flash the Image
+
+### Linux
+
+Use `dd` (simple and reliable):
+
+```bash
+sudo dd if=/path/to/image.img of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+> [!CAUTION]
+>
+> Double-check the target device (`/dev/sdX`).
+> Selecting the wrong device **will erase your system disk**.
+
+After flashing, it is recommended to run:
+
+```bash
+sync
+```
+
+Then safely remove the SD card.
+
+---
+
+### Windows / macOS
+
+The easiest method is **balenaEtcher**.
+
+1. Open balenaEtcher
+
+2. Select the Lichee-Jack image file
+
+![](/assets/flash_image1.png)
+
+3. Select the target SD card
+
+![](/assets/flash_image2.png)
+
+4. Click **Flash!**
+
+![](/assets/flash_image3.png)
+
+5. Wait until flashing and validation are complete
+
+![](/assets/flash_image4.png)
+![](/assets/flash_image5.png)
+
+---
+
+## 4. Boot the Device
+
+1. Insert the SD card into the **Lichee-Jack**
+2. Connect the device to your computer using a **USB cable**
+3. Set the **mode switch** to **mode0 (debug mode)**
+4. Power on / plug in the device
+
+The system will:
+
+* Boot automatically from the SD card
+* **Automatically resize the rootfs partition** on first boot
+* Enter **debug mode**
+
+  * Blue fading RGB LED
+  * USB gadget enumerates as **CDC / NCM** network device
+
+![](/assets/debug_led.gif)
+
+![](/assets/bootup_host_dmesg.png)
+
+After boot completes:
+
+* Your host will receive an IP address via DHCP
+* Lichee-Jack default address:
+
+```
+10.42.0.1
+```
+
+![](/assets/bootup_host_debug_ip.png)
+
+
+You can now access the device through the USB network interface.
+
+
+---
+
+You are now ready to use Lichee-Jack 🚀
+

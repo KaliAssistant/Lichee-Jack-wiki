@@ -1,0 +1,146 @@
+---
+title: RUN
+---
+
+# RUN
+
+`RUN` is the **payload execution dispatcher** for **Lichee-Jack**.
+
+It prepares the execution environment, selects the correct payload based on the active mode, and launches it in a predictable and controlled way. This utility is typically invoked automatically by **`jackstart`** in response to the **Mode Switch** state.
+
+---
+
+## Purpose
+
+* Provide a **single, stable entry point** for payload execution
+* Abstract payload discovery and interpreter selection
+* Enforce directory layout and execution rules
+* Offer **clear failure signaling** using LED patterns
+
+---
+
+## Supported Modes
+
+| Mode     | Description                                    |
+| -------- | ---------------------------------------------- |
+| `MOD1`   | Execute payload from `/root/payloads.d/mod1.d` |
+| `MOD2`   | Execute payload from `/root/payloads.d/mod2.d` |
+| `<file>` | Execute a user-specified payload file          |
+
+---
+
+## Directory Layout
+
+```
+/root
+├── payloads.d
+│   ├── mod1.d
+│   │   └── payload*
+│   └── mod2.d
+│       └── payload*
+│
+└── loot.d
+```
+
+* Each mode directory should contain **exactly one active payload**
+* Payload filenames must start with `payload`
+* Output or collected data should be written to `/root/loot.d`
+
+---
+
+## Supported Payload Formats
+
+`RUN` determines how to execute the payload by filename:
+
+| Filename      | Execution Method     |
+| ------------- | -------------------- |
+| `payload.py`  | `python3 payload.py` |
+| `payload`     | `bash payload`       |
+| `payload.sh`  | `bash payload.sh`    |
+| `payload.txt` | `bash payload.txt`   |
+
+Before execution, CRLF line endings are stripped to ensure compatibility.
+
+---
+
+## Usage
+
+```sh
+RUN MOD1
+RUN MOD2
+RUN /path/to/custom_payload
+```
+
+---
+
+## Execution Flow
+
+1. Log payload startup via `syslog`
+2. Verify payload directories exist
+3. Ensure `/root/loot.d` exists (create if missing)
+4. Locate the newest matching `payload*` file
+5. Select interpreter based on filename
+6. Execute payload with output suppressed
+
+---
+
+## Error Handling & LED Signaling
+
+On fatal errors, `RUN`:
+
+* Logs an error to `syslog`
+* Signals failure via **red LED blink**
+* Terminates immediately
+
+LED pattern used:
+
+```text
+Red blink (500 ms)
+```
+
+This makes failures visible even on **headless deployments**.
+
+---
+
+## Logging
+
+All events are logged using:
+
+* Syslog tag: `LicheeJack`
+* Info level for normal operation
+* Error level for fatal conditions
+
+This allows easy inspection via `journalctl` or `/var/log/syslog`.
+
+---
+
+## Design Notes
+
+* No interactive prompts
+* No environment inheritance assumptions
+* Deterministic payload selection
+* Silent payload execution by default
+
+This behavior is intentional for **stealthy, unattended operation**.
+
+---
+
+## Integration
+
+* Invoked by `jackstart`
+* Controlled by **Mode Switch** kernel driver
+* Works with `NETMODE`, `LED`, `AUDIOCTL`, and `BATTERY`
+* Payloads can combine networking, HID, storage, and LEDs
+
+---
+
+## Limitations
+
+* Only one payload per mode directory is supported
+* No concurrency or background payload management
+* Payload output is suppressed unless redirected manually
+
+---
+
+`RUN` embodies the Lichee-Jack core philosophy: **explicit execution, predictable behavior, and minimal magic**.
+

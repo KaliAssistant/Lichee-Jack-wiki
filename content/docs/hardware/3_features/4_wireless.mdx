@@ -1,0 +1,66 @@
+---
+title: WiFi6 / BT5.2
+---
+
+# WiFi6 / BT5.2
+
+Lichee-Jack supports **WiFi 6** and **Bluetooth 5.2** via the **AIC8800** module used on the **LicheeRV-Nano W**.
+
+The Wi‑Fi interface uses **SDIO**, while Bluetooth (BLE) uses a **UART over USB** transport.
+
+---
+
+## WiFi driver
+
+Lichee-Jack uses a **patched AIC8800 driver** based on the source from `radxa-pkg/aic8800`.
+
+In the original driver `Makefile`, monitor mode and frame injection are disabled by default via the following macros:
+
+```makefile showLineNumbers
+# Enable Monitor+Data interface support (need FW support)
+CONFIG_RWNX_MON_DATA = n
+CONFIG_RWNX_MON_XMIT = n
+CONFIG_RWNX_MON_RXFILTER = n
+```
+
+To enable **active monitor mode (frame injection)**, modify them as follows:
+
+```makefile showLineNumbers
+# Enable Monitor+Data interface support (need FW support)
+CONFIG_RWNX_MON_DATA = y
+CONFIG_RWNX_MON_XMIT = y
+CONFIG_RWNX_MON_RXFILTER = n
+```
+
+> [!IMPORTANT] 
+>
+> `CONFIG_RWNX_MON_RXFILTER` must remain **disabled**. Enabling it will cause the kernel to fail capturing packets correctly.
+
+With the above configuration, Lichee-Jack can reliably operate in monitor mode while retaining normal data interfaces.
+
+---
+
+## Bluetooth (BLE)
+
+On the **LicheeRV-Nano W PCB**, Bluetooth is gated by a footprint for an **RN4-4020 (0Ω) resistor**.
+
+* If you purchase a standard LicheeRV-Nano W, simply install this **0Ω resistor** to enable BLE hardware routing.
+* No additional PCB modification is required.
+
+### Transport details
+
+* **WiFi**: SDIO (dedicated to WiFi 6)
+* **Bluetooth / BLE**: USB UART (RX / TX / CTS / RTS)
+
+Bluetooth is **not** routed over SDIO because:
+
+* SDIO is already occupied by WiFi
+* Running BLE over SDIO on AIC8800 is **unstable**
+* UART-based transport provides significantly better stability and reliability
+
+For this reason, Lichee-Jack uses **USB UART** for BLE exclusively.
+
+---
+
+This design ensures stable WiFi 6 operation, functional monitor mode with frame injection, and reliable Bluetooth 5.2 support without SDIO contention.
+

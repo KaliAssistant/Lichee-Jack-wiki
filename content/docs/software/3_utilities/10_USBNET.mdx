@@ -1,0 +1,102 @@
+---
+title: USBNET
+---
+
+# USBNET
+
+## Overview
+
+**USBNET** is a lightweight helper utility for managing the USB network interface on Lichee-Jack, typically exposed as `usb0` when using USB gadget network modes such as **DEBUG** or **NCM**.
+
+It provides a minimal, script-friendly way to:
+
+* Assign or remove IP addresses
+* Bring the USB network interface up or down
+* Prepare a predictable USB networking environment for payloads, debugging, and SFTP management
+
+This tool intentionally avoids NetworkManager and operates directly via `iproute2`, making it reliable in early boot stages and constrained payload environments.
+
+---
+
+## Typical Use Cases
+
+* Configure a static IP for **USB CDC-NCM** debug mode
+* Reset USB network state before or after payload execution
+* Pair with `USBMODE DEBUG` or `USBMODE NCM`
+* Provide a stable management channel (SFTP / SSH) over USB
+
+---
+
+## Supported Actions
+
+| Action            | Description                                     |
+| ----------------- | ----------------------------------------------- |
+| `SETIP <ip/mask>` | Assign a static IP address to the USB interface |
+| `NOIP`            | Remove all IP addresses from the interface      |
+| `IFUP`            | Bring the interface up                          |
+| `IFDOWN`          | Bring the interface down                        |
+
+Default interface: **`usb0`** (can be adjusted in the script if needed)
+
+---
+
+## Usage
+
+```sh
+USBNET SETIP 10.42.0.1/24
+USBNET IFUP
+```
+
+Remove IP configuration:
+
+```sh
+USBNET NOIP
+```
+
+Disable the interface:
+
+```sh
+USBNET IFDOWN
+```
+
+---
+
+## Integration with USBMODE
+
+USBNET is typically used together with **USBMODE**:
+
+```sh
+USBMODE DEBUG
+USBNET SETIP 10.42.0.1/24
+```
+
+This combination enables:
+
+* USB-powered debug networking
+* SFTP-based payload and loot management
+* A safer alternative to USB Mass Storage (UMS)
+
+---
+
+## Design Notes
+
+* Uses `ip addr` and `ip link` directly (no NetworkManager dependency)
+* Flushes existing IPs before assignment to avoid conflicts
+* Logs all actions via `logger` under the `LicheeJack` tag
+* Safe to call repeatedly (idempotent behavior where possible)
+
+---
+
+## Related Utilities
+
+* **USBMODE** – controls USB gadget configuration
+* **UDISKCTL** – manages loop-mounted disk images for UMS
+* **NETMODE** – manages Ethernet-side network behavior
+* **RUN** – dispatches payload execution
+
+---
+
+## Summary
+
+**USBNET** is a small but critical building block in the Lichee-Jack toolchain, providing deterministic USB network control without heavy dependencies. It complements USBMODE and enables a modern, reliable management plane over USB.
+

@@ -1,0 +1,122 @@
+---
+title: Features
+asIndexPage: true
+---
+
+import { Cards, Image } from 'nextra/components'
+
+# Features
+
+---
+
+# RGB LED
+
+WS2812B RGB LED integrated inside the RJ45 port for real-time status, payload feedback, and visual signaling.
+
+<Cards num={1}>
+  <Cards.Card arrow title="RGB LED" href="/docs/hardware/3_features/1_rgbled">
+  </Cards.Card>
+</Cards>
+
+---
+
+# 10/100M ETH
+
+Onboard 10/100 Mbps Ethernet PHY for wired auditing, MITM scenarios, and payload delivery.
+
+<Cards num={1}>
+  <Cards.Card arrow title="10/100M ETH" href="/docs/hardware/3_features/2_eth">
+  </Cards.Card>
+</Cards>
+
+---
+
+# 20-pin GPIO Expansion
+
+20-pin GPIO header providing SPI, I2C, GPIO, and power rails for hardware extensions.
+
+<Cards num={1}>
+  <Cards.Card arrow title="20-pin GPIO Expansion" href="/docs/hardware/3_features/3_gpio">
+  </Cards.Card>
+</Cards>
+
+---
+
+# Wi‑Fi 6 / Bluetooth 5.2
+
+SDIO-based Wi‑Fi 6 module with Bluetooth 5.2 support for wireless attacks, management, and control.
+
+<Cards num={1}>
+  <Cards.Card arrow title="Wi‑Fi 6 / Bluetooth 5.2" href="/docs/hardware/3_features/4_wireless">
+  </Cards.Card>
+</Cards>
+
+---
+
+# Mode Switch
+
+Physical multi-position mode switch for instant behavior selection (debug, attack, payload, safe).
+
+<Cards num={1}>
+  <Cards.Card arrow title="Mode Switch" href="/docs/hardware/3_features/5_modsw">
+  </Cards.Card>
+</Cards>
+
+---
+
+# Battery Management
+
+Internal 200 mAh Li‑Po battery with ADC monitoring, charging protection, and over 1 hour standalone runtime.
+
+<Cards num={1}>
+  <Cards.Card arrow title="Battery Management" href="/docs/hardware/3_features/6_battery">
+  </Cards.Card>
+</Cards>
+
+---
+
+# USB OTG
+
+SoC USB 2.0 OTG PHY supporting multiple USB gadget modes (CDC, ECM, NCM, HID, Mass Storage).
+
+<Cards num={1}>
+  <Cards.Card arrow title="USB OTG" href="/docs/hardware/3_features/7_usb">
+  </Cards.Card>
+</Cards>
+
+---
+
+# Audio System
+
+Built‑in 1 W speaker and onboard 16‑bit digital microphone for audio playback, alerts, and experiments.
+
+<Cards num={1}>
+  <Cards.Card arrow title="Audio System" href="/docs/hardware/3_features/8_audio">
+  </Cards.Card>
+</Cards>
+
+
+---
+
+## Design Philosophy
+
+Lichee‑Jack is designed as a **hardware-assisted LAN implant** focused on:
+
+* Rapid deployment
+* Visual and physical feedback
+* Payload-driven workflows
+* Fully open-source hardware and software
+
+Every feature is intentionally exposed to the user, avoiding vendor lock-in, proprietary tooling, or closed firmware.
+
+## Payload-Oriented Hardware
+
+The hardware design directly supports payload execution:
+
+* LEDs for state indication and progress feedback
+* Mode switch for zero-interaction execution
+* Ethernet + USB gadgets for multi-vector access
+* Battery-backed operation for covert deployment
+
+This makes Lichee‑Jack ideal for **Red Team**, **Social Engineering**, **Education**, and **Research** use cases.
+

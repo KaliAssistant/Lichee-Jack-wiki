@@ -1,0 +1,61 @@
+---
+title: 10/100M ETH
+---
+
+# 10/100M Ethernet
+
+Lichee-Jack uses the SoC’s **integrated Ethernet PHY**, supporting **10/100 Mbps**, **Full / Half Duplex** operation.
+
+This design avoids the need for an external PHY chip, reducing BOM cost, PCB complexity, and power consumption, while still providing reliable wired network connectivity for payload delivery and auditing scenarios.
+
+---
+
+## PCB Routing
+
+Lichee-Jack adopts a **stacked board** design to connect the main board with the extension board.
+
+However, on the **LicheeRV Nano**, the Ethernet signal pads are **not exposed on the castellated edges**. At the early stage of the project, the Ethernet signals were therefore **manually wired** from the SoC Ethernet pads to the extension board.
+
+While functional, this approach had several drawbacks:
+
+* Visually untidy and difficult to reproduce
+* Inconsistent trace length
+* Limited EMI control
+* Poor long-term reliability
+
+---
+
+## ETH-FPC Design
+
+To address these issues, a dedicated **ETH-FPC** was designed.
+
+This design incorporates practical PCB routing experience, including:
+
+* Differential pair **length matching**
+* Controlled impedance routing
+* Improved **EMI grounding** strategy
+* Cleaner mechanical assembly
+
+The ETH-FPC significantly improved both signal integrity and overall build quality compared to manual wiring.
+
+---
+
+## Improved Architecture
+
+In the latest hardware revision, the original **ETH-FPC** and **header-FPC** solutions were replaced with a unified **Extension Board FPC**.
+
+This new approach:
+
+* Simplifies inter-board connections
+* Reduces connector count
+* Improves mechanical stability
+* Enhances manufacturability
+
+For detailed PCB revisions, refer to:
+
+[PCB Version History](/docs/hardware/1_pcb#pcb-version-history)
+
+---
+
+This evolution reflects the project’s transition from prototype-level wiring to a **clean, production-oriented hardware architecture**, while maintaining flexibility for future expansion.
+

@@ -1,0 +1,239 @@
+---
+title: RGB LED
+---
+
+import { Cards, Image } from 'nextra/components'
+
+# RGB LED
+<br/>
+<Image src="/assets/RGB_LED_SAMPLE.jpg" />
+
+Lichee-Jack uses a **side‑view SMT WS2812B 4020 full‑color RGB LED (24‑bit)**.
+Only **one GPIO** is required to drive the LED by generating a ~**800 kHz–1 MHz** single‑wire pulse waveform.
+
+---
+
+## Background & Design Mistakes
+
+At the beginning of the project, I referenced the **SiPeed official Lichee‑RV Nano GPIO pinout** and noticed that **GPIOA‑25** was labeled as **“SPI4 MOSI”**.
+My initial assumption was:
+
+> WS2812B might be driven using *SPI bit‑banging* (3‑bit encoding mode).
+
+However, I made two critical mistakes:
+
+1. I **did not verify the SG2002 SoC datasheet**.
+2. On **LicheeRV Nano**, the so‑called **SPI4 does not physically exist**.
+
+In reality:
+
+* “SPI4” only exists as a **GPIO‑bitbanged SPI node** in the **Device Tree**.
+* There is **no real SPI controller** behind it.
+
+So what I was actually attempting was:
+
+> GPIO‑bitbang → fake SPI → bitbang WS2812B
+
+This was unnecessarily complex and fundamentally wrong.
+
+---
+
+## Realization
+
+While debugging, I remembered an **old Arduino project** where an **ATmega328P** drove WS2812B **purely by GPIO bit‑banging** — no SPI, no peripherals.
+
+That was the key insight:
+
+> **WS2812B only needs precise timing, not SPI.**
+
+So the correct solution was simply:
+
+> **Direct GPIO bit‑banging with accurate delays**
+
+---
+
+## First Attempt: Userspace GPIO (Failure)
+
+I first wrote a **userspace C test program** to toggle GPIO directly.
+
+Results:
+
+* LED only showed **solid white**
+* **CPU usage stuck at 100%**
+
+Why?
+
+Because I was doing this:
+
+* Using `__asm__("nop")` busy‑loops
+* In **userspace**
+
+Yes…
+
+> **Userspace.**
+>
+> **USERSpace.**
+>
+> **USERSPACEEEEEE.**
+
+This approach is fundamentally broken:
+
+* Scheduler preemption destroys timing
+* Busy‑waiting wastes CPU
+* No deterministic waveform
+
+---
+
+## Second Attempt: Kernel Module (Also Bad)
+
+Next, I moved the waveform generation into a **kernel module**.
+
+Observations:
+
+* Oscilloscope showed a **stable ~1.2 MHz waveform**
+* WS2812B timing looked correct
+
+But…
+
+* The **kernel stopped responding**
+* System became unresponsive
+
+The reason was obvious in hindsight:
+
+* I was still using **`ndelay()`**
+* Inside tight loops
+* Blocking the kernel for too long
+
+> Just because you *can* run code in kernel space doesn’t mean you *should*.
+
+---
+
+## Final Working Architecture
+
+The breakthrough came from understanding one important WS2812B behavior:
+
+> **WS2812B latches (locks) its color when no signal is present.**
+
+### Final Strategy
+
+1. **Kernel space**
+
+   * Generate WS2812B waveform using `ndelay()`
+   * Only during **short burst transmissions**
+
+2. **Frame timing**
+
+   * Use `usleep_range()` **between frames**
+   * Avoid long kernel blocking
+
+3. **Shared Memory Interface**
+
+   * Import existing **SHM logic**
+   * Expose a clean userspace control node:
+
+     ```
+     /dev/ws2812b
+     ```
+
+4. **Userspace**
+
+   * Write RGB data into shared memory
+   * Kernel handles precise timing safely
+
+---
+
+## Pseudo Code Overview
+
+```c showLineNumbers
+/**
+ * ws2812b_send_led - Transmit a single LED color frame
+ * @g: Green value (0–255)
+ * @r: Red value (0–255)
+ * @b: Blue value (0–255)
+ *
+ * Sends a 24-bit GRB sequence to the LED using precise timing with
+ * interrupts and preemption disabled.
+ */
+static void ws2812b_send_led(uint8_t g, uint8_t r, uint8_t b)
+{
+    int i, c;
+    uint8_t colors[3] = { g, r, b };
+
+    local_irq_disable();
+    preempt_disable();
+
+    /* Must clear gpio here*/
+    gpio_clear();
+    ndelay(T1H);
+  
+    for (c = 0; c < 3; c++) {
+        uint8_t byte = colors[c];
+        for (i = 7; i >= 0; i--) {
+            if (byte & (1 << i)) {
+                gpio_set();
+                ndelay(T1H);
+                gpio_clear();
+                ndelay(T1L);
+            } else {
+                gpio_set();
+                ndelay(T0H);
+                gpio_clear();
+                ndelay(T0L);
+            }
+        }
+    }
+
+    preempt_enable();
+    local_irq_enable();
+}
+
+
+/**
+ * ws_thread_fn - Kernel thread to refresh LED data
+ * @data: unused
+ *
+ * Periodically transmits the framebuffer contents to all LEDs at ~30 FPS.
+ *
+ * Return: always 0
+ */
+static int ws_thread_fn(void *data)
+{
+    while (!kthread_should_stop()) {
+        int i;
+        for (i = 0; i < LED_COUNT; i++) {
+            ws2812b_send_led(framebuf[i*3 + 0], framebuf[i*3 + 1], framebuf[i*3 + 2]);
+        }
+        usleep_range(KTHR_USLEEP_MIN, KTHR_USLEEP_MAX);
+    }
+    return 0;
+}
+
+```
+
+---
+
+## Result
+
+<br/>
+<Image src="/assets/osc_rgbled.png" />
+
+* Stable WS2812B control
+* Correct colors
+* No CPU 100% lock
+* Kernel remains responsive
+* Clean userspace API
+
+---
+
+## Lessons Learned
+
+* **Always verify the SoC datasheet** — pinout diagrams can lie
+* WS2812B does **not** require SPI
+* Userspace timing ≠ real‑time
+* Kernel space must be used **carefully and briefly**
+* Latching behavior of WS2812B is your friend
+
+---
+
+This RGB LED subsystem is now fully integrated into the Lichee‑Jack platform and exposed cleanly for higher‑level applications.
+

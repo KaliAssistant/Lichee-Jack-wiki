@@ -1,0 +1,187 @@
+---
+title: UDHCPCTL
+---
+
+# UDHCPCTL
+
+`UDHCPCTL` is a small control utility used by **Lichee-Jack** to manage multiple `udhcpd` DHCP server instances via **systemd template units**.
+
+It provides a unified and safe interface to **start, restart, stop, or stop all** DHCP servers defined by configuration files under:
+
+```
+/root/config/udhcpd/<unit>.conf
+```
+
+Each configuration file corresponds to a systemd service:
+
+```
+udhcpd@<unit>.service
+```
+
+---
+
+## Design Goals
+
+* Support **multiple isolated DHCP servers** (per interface / per mode)
+* Avoid manual `systemctl` calls in payloads
+* Ensure **safe state transitions** (no duplicate instances)
+* Provide **clear logging** via `logger`
+* Fail fast and visibly on critical errors
+
+---
+
+## How It Works
+
+`UDHCPCTL` is a thin dispatcher around `systemctl` that operates on **templated units**:
+
+```
+udhcpd@<unit>.service
+```
+
+Where:
+
+* `<unit>` is the **basename** of a config file in `/root/config/udhcpd/`
+* The systemd service loads the matching config
+
+Example:
+
+```
+/root/config/udhcpd/usb.conf
+→ udhcpd@usb.service
+```
+
+---
+
+## Usage
+
+```
+UDHCPCTL <ACTION> <UNIT>
+```
+
+### Actions
+
+| Action     | Description                           |
+| ---------- | ------------------------------------- |
+| `START`    | Start `udhcpd@<unit>.service`         |
+| `RESTART`  | Restart `udhcpd@<unit>.service`       |
+| `STOP`     | Stop `udhcpd@<unit>.service`          |
+| `STOP_ALL` | Stop **all** `udhcpd@*.service` units |
+
+---
+
+## Examples
+
+### Start a DHCP server
+
+```
+UDHCPCTL START usb
+```
+
+Starts:
+
+```
+udhcpd@usb.service
+```
+
+---
+
+### Restart a DHCP server
+
+```
+UDHCPCTL RESTART eth
+```
+
+Safely stops and re-starts:
+
+```
+udhcpd@eth.service
+```
+
+---
+
+### Stop a specific DHCP server
+
+```
+UDHCPCTL STOP usb
+```
+
+If the unit is not active, the command exits **gracefully** without error.
+
+---
+
+### Stop all DHCP servers
+
+```
+UDHCPCTL STOP_ALL
+```
+
+Stops all running `udhcpd@*` instances.
+
+---
+
+## Safety Checks
+
+`UDHCPCTL` performs several validations:
+
+* Checks whether a unit is already active before starting
+* Avoids stopping inactive units unnecessarily
+* Verifies the unit remains active after startup
+* Logs all operations via `logger`:
+
+```
+[*] Normal operations
+[!] Errors (syslog level: err)
+```
+
+On fatal failures, the script **exits immediately**.
+
+---
+
+## Logging
+
+All actions are logged under the tag:
+
+```
+LicheeJack
+```
+
+You can inspect logs using:
+
+```
+journalctl -t LicheeJack
+```
+
+---
+
+## Typical Integration
+
+`UDHCPCTL` is commonly invoked by:
+
+* `NETMODE` scripts
+* Payloads requiring DHCP services
+* Boot-time network role selection
+
+Example flow:
+
+```
+MODE switch → NETMODE → UDHCPCTL START usb
+```
+
+---
+
+## Failure Behavior
+
+On critical errors (e.g. systemd failure):
+
+* An error is logged
+* The script exits with non-zero status
+* Higher-level controllers (e.g. `RUN`, `NETMODE`) can react accordingly
+
+---
+
+## Summary
+
+`UDHCPCTL` provides a **robust, scriptable, and mode-aware** way to control DHCP services on Lichee-Jack.
+
+It abstracts systemd complexity and ensures DHCP state remains predictable across payload execution and mode switches.
+

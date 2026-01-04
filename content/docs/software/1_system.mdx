@@ -1,0 +1,179 @@
+---
+title: System
+---
+
+# System
+
+Lichee-Jack uses **Debian GNU/Linux (stable)** as its main operating system, with a **custom bootloader** and **custom Linux kernel** tailored for the SG2002 SoC and embedded use cases.
+
+---
+
+## Boot Process
+
+The following boot flow is translated and adapted from the original SiPEED Chinese documentation.
+
+### Boot Flow Overview
+
+1. **BootROM (BL1)**
+   The SoC BootROM checks whether the **first FAT partition** on the SD card contains `fip.bin`.
+
+   * If `fip.bin` exists, the boot process continues.
+   * If not, the SoC enters **USB download mode**, exposing an **ACM USB serial device**.
+
+   During this stage:
+
+   * `uart0` is initialized
+   * Baud rate is set to **128000**
+
+2. **BL2 (FIP stage)**
+   `fip.bin` (BL2) is loaded into **TPU SRAM at `0x0C000000`**, then execution jumps to BL2.
+
+   BL2 performs:
+
+   * Clock initialization
+   * DRAM initialization
+
+3. **OpenSBI & U-Boot**
+
+   * OpenSBI is loaded into DRAM and executed
+   * U-Boot is then loaded into DRAM and executed
+
+4. **Kernel Loader**
+   U-Boot loads the `boot.sd` file from the **first partition** into DRAM.
+
+5. **Kernel Execution**
+   Execution jumps to the code provided by `boot.sd`, which is typically the **Linux kernel**.
+
+---
+
+## SoC Architecture
+
+The **LicheeRV Nano** uses the **Sophgo SG2002 SoC**, which integrates multiple heterogeneous processing units:
+
+* **RISC-V C906 (1 GHz)** – main boot core
+* **RISC-V C906 (700 MHz)** – secondary core (used for kernel RPC / auxiliary tasks)
+* **ARM Cortex-A53 (1 GHz)** – unused in Lichee-Jack
+* **TPU (1 TOPS @ INT8)**
+* **8051 MCU**
+
+> [!NOTE]
+>
+> **Lichee-Jack only uses the RISC-V cores**. The ARM core and other subsystems are intentionally unused.
+
+The Linux kernel runs on the **main C906 core**, while the secondary C906 is reserved for remote or auxiliary kernel tasks.
+
+---
+
+## Kernel
+
+Lichee-Jack runs a **Linux 5.10** kernel:
+
+* Forked from `sophgo/linux_5.10`
+* Ultimately derived from `XUANTIE-RV/linux`
+
+This kernel is:
+
+* Fully open-source
+* In-tree driver compatible
+* Auditable by anyone
+
+### Security Statement
+
+There is often concern that hardware or software originating from Chinese vendors may contain backdoors or hidden risks.
+
+Lichee-Jack addresses this directly:
+
+* **All hardware schematics are open**
+* **All software, bootloader, and kernel sources are open**
+* **All drivers are in-tree and auditable**
+
+Lichee-Jack is designed for **cybersecurity and penetration testing**, and transparency is a core design principle.
+
+Anyone can review the code, report vulnerabilities, and verify the system behavior.
+
+---
+
+## Kernel Drivers
+
+Lichee-Jack includes several **custom in-tree kernel modules**:
+
+### 1. ws2812b-gpio
+
+* GPIO-based timing driver for **WS2812B RGB LEDs**
+* One of the earliest drivers added to the project
+* Uses precise GPIO register control for waveform timing
+
+### 2. mod-switch
+
+* Driver for the **hardware MODE switch**
+* Polling interval: **20 ms**
+* Exposes a character device: `/dev/modsw`
+* User-space can read switch state using simple tools (`cat`, scripts, etc.)
+
+---
+
+## System Core
+
+Lichee-Jack’s Debian image includes a prebuilt utility package:
+
+**Lichee-Jack-utils**
+[https://github.com/KaliAssistant/Lichee-Jack-utils](https://github.com/KaliAssistant/Lichee-Jack-utils)
+
+This package provides:
+
+* Core device control logic
+* Mode switch handling
+* USB gadget configuration
+* Payload execution framework
+* Networking utilities
+* LED status control
+
+---
+
+## Core Daemon: `jackstart`
+
+`jackstart` is the **main control daemon** of the Lichee-Jack platform.
+
+### Responsibilities
+
+* Detects hardware MODE switch position
+* Initializes USB gadget roles (DEBUG / PAYLOAD)
+* Controls RGB LED status indications
+* Manages network interfaces and MAC randomization
+* Enables / disables services such as SSH
+* Launches payload modules automatically
+
+### Mode Overview
+
+| Mode     | Description                                                 |
+| -------- | ----------------------------------------------------------- |
+| DEBUG    | USB NCM gadget enabled, static IP, DHCP server, SSH enabled |
+| PAYLOAD1 | Executes MOD1 payload, SSH disabled, randomized MAC         |
+| PAYLOAD2 | Executes MOD2 payload, SSH disabled, randomized MAC         |
+
+The daemon runs continuously and **automatically switches modes** when the physical MODE switch position changes.
+
+---
+
+## Systemd Service
+
+`jackstart` is launched by a systemd service:
+
+* Service name: `jack-coreutils.service`
+* Startup target: `multi-user.target`
+
+This ensures that Lichee-Jack enters the correct operating mode immediately after boot.
+
+---
+
+## Summary
+
+The Lichee-Jack system stack is designed to be:
+
+* Minimal
+* Transparent
+* Auditable
+* Security-focused
+
+From BootROM to payload execution, every stage is documented, open, and reproducible — making Lichee-Jack suitable for both research and real-world security work.
+

@@ -1,0 +1,222 @@
+---
+title: USBMODE
+---
+
+# USBMODE
+
+## Overview
+
+**USBMODE** is the USB gadget mode controller for **Lichee-Jack**. It provides a unified userspace interface to switch USB gadget layouts dynamically by managing `systemd` template units based on **linux-usb-gadgets/gt**.
+
+Instead of hardcoding USB gadget logic in scripts or init flows, Lichee-Jack treats each USB gadget layout as a **service**:
+
+```
+gt@<mode>.service
+```
+
+`USBMODE` ensures that only one gadget layout is active at a time, stops conflicting instances, and validates that the requested gadget is properly loaded and running.
+
+This design keeps USB behavior:
+
+* deterministic
+* debuggable
+* hot-switchable
+
+and aligns well with payload-driven workflows.
+
+---
+
+## Supported Modes
+
+| Mode       | Description                                                       |
+| ---------- | ----------------------------------------------------------------- |
+| `DEBUG`    | CDC-NCM gadget for development / debugging                        |
+| `NCM`      | CDC-NCM network gadget for payloads                               |
+| `ACM`      | CDC-ACM serial gadget                                             |
+| `HID`      | USB HID (keyboard / mouse), used with Zero-HID / pyducky payloads |
+| `UMS`      | USB Mass Storage gadget                                           |
+| `HID_UMS`  | Composite gadget: HID + Mass Storage                              |
+| `*`        | Custom gadget name (`gt@<NAME>.service`)                          |
+| `STOP_ALL` | Stop all active USB gadget instances                              |
+
+All predefined modes map directly to lowercase systemd units:
+
+```
+DEBUG   -> gt@debug.service
+HID     -> gt@hid.service
+HID_UMS -> gt@hid_ums.service
+```
+
+---
+
+## How It Works
+
+Internally, `USBMODE`:
+
+1. Stops **all existing USB gadget services** (`gt@*`)
+2. Starts the requested gadget unit
+3. Verifies:
+
+   * the unit exists
+   * the unit remains active after startup
+4. Logs all transitions via `syslog`
+
+This prevents partial gadget states and avoids configfs conflicts.
+
+---
+
+## Usage
+
+```sh
+USBMODE <MODE>
+```
+
+### Examples
+
+Switch to HID mode:
+
+```sh
+USBMODE HID
+```
+
+Enable Mass Storage mode:
+
+```sh
+USBMODE UMS
+```
+
+Composite HID + UMS payload:
+
+```sh
+USBMODE HID_UMS
+```
+
+Stop all USB gadgets:
+
+```sh
+USBMODE STOP_ALL
+```
+
+Use a custom gadget layout:
+
+```sh
+USBMODE my_custom_layout
+# -> gt@my_custom_layout.service
+```
+
+---
+
+## UMS / HID_UMS Requirements
+
+For **UMS** and **HID_UMS** modes, a **valid disk image file** must exist.
+
+Default path:
+
+```
+/root/udisk.d/udisk.img
+```
+
+If the image is missing, corrupted, or mounted read-only, the gadget may:
+
+* fail enumeration
+* mount as read-only on the host
+* lose data on power cut
+
+This is **not** a USBMODE bug, but a known limitation of FAT-based UMS under abrupt power loss.
+
+---
+
+## Example `gt` config (UMS)
+
+```configfs
+attrs :
+{
+    bcdUSB = 0x200;
+    idVendor = 0x1D6B;
+    idProduct = 0x6d99;
+};
+
+strings = (
+    {
+        lang = 0x409;
+        manufacturer = "KALIASSISTANT";
+        product = "LICHEE-JACK V1.0 SharkJack/LANTap (UMS MODE)";
+        serialnumber = "00000000000000000000000000000000";
+    }
+);
+
+functions :
+{
+    mass_storage :
+    {
+        instance = "ums0";
+        type = "mass_storage";
+        attrs :
+        {
+            stall = 1;
+            luns = (
+                {
+                    cdrom = 0;
+                    ro = 0;
+                    removable = 1;
+                    nofua = 0;
+                    file = "/root/udisk.d/udisk.img";
+                }
+            );
+        };
+    };
+};
+
+configs = (
+    {
+        id = 1;
+        name = "c";
+        attrs :
+        {
+            bmAttributes = 0x80;
+            bMaxPower = 250;
+        };
+        functions = (
+            {
+                name = "mass_storage.ums0";
+                function = "mass_storage";
+            }
+        );
+    }
+);
+```
+
+---
+
+## Design Notes
+
+Originally, Lichee-Jack planned to rely heavily on **USB Mass Storage** for payload and loot exchange (similar to BashBunny).
+
+However, real-world testing showed:
+
+* FAT filesystems frequently enter **read-only protection**
+* abrupt power loss can corrupt the image
+* loot loss is unacceptable for offensive payloads
+
+As a result:
+
+* **SFTP over NCM** became the primary payload/loot channel
+* `UMS` is now mainly used for:
+
+  * demo mode
+  * compatibility payloads
+  * controlled environments
+
+`USBMODE` remains the switchboard that ties all USB behaviors together cleanly.
+
+---
+
+## Related Utilities
+
+* `UDISKCTL` – manage UMS image mount lifecycle
+* `NETMODE` – network role control (client/server/auto)
+* `RUN` – payload dispatcher
+* `SWITCH` – hardware mode selector
+
+Together, these form the **Lichee-Jack control plane**.
+

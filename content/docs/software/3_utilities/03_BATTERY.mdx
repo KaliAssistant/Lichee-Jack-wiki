@@ -1,0 +1,146 @@
+---
+title: BATTERY
+---
+
+# BATTERY
+
+`BATTERY` is a **lightweight Li-ion battery status reader** for **Lichee-Jack**.
+
+It reads raw values from the **SoC SAR ADC**, converts them into a **battery voltage**, and estimates a **realistic battery percentage** using a Li-ion discharge curve approximation.
+
+The utility is intentionally simple, fast, and suitable for **shell scripts, status polling, LEDs, and payload logic**.
+
+---
+
+## Output Format
+
+```
+<percentage>%@<voltage>v
+```
+
+Example:
+
+```
+78%@3.9123v
+```
+
+This compact format is easy to parse in shell, C, or scripting languages.
+
+---
+
+## Features
+
+* Reads battery voltage via **SAR ADC**
+* Converts raw ADC value to **real voltage**
+* Estimates battery percentage using a **non-linear Li-ion curve**
+* No daemon, no background process
+* Deterministic, script-friendly output
+
+---
+
+## Dependencies
+
+* POSIX shell (`/bin/sh`)
+* `awk`
+
+No external libraries or services are required.
+
+---
+
+## Hardware Background
+
+### ADC Characteristics
+
+* **ADC device**: `/dev/cvi-saradc0`
+* **Resolution**: 12-bit
+* **Raw range**: `0 – 4095`
+* **Voltage range**: `0 – 4.6 V`
+
+The battery voltage is routed to the SAR ADC through onboard power circuitry.
+
+---
+
+## Conversion Logic
+
+### 1. Raw ADC → Voltage
+
+The raw ADC value is converted using:
+
+```
+voltage = raw × 4.6 / 4095
+```
+
+The result is formatted to **4 decimal places**.
+
+---
+
+### 2. Voltage → Percentage
+
+Instead of linear scaling, `BATTERY` uses a **step-based Li-ion discharge curve approximation**, which better reflects real battery behavior:
+
+* Flat voltage region between ~3.7–4.0 V
+* Rapid drop near low charge
+* Stable 100% region near full charge
+
+This avoids misleading readings common with linear mappings.
+
+---
+
+## Usage
+
+```sh
+BATTERY
+```
+
+No arguments are required.
+
+---
+
+## Example
+
+```sh
+root@licheejack:~# BATTERY
+83%@3.9851v
+```
+
+---
+
+## Error Handling
+
+If the ADC read fails or returns no data:
+
+```
+0%@0.0000v
+```
+
+This ensures callers can safely handle error states without blocking or crashing.
+
+---
+
+## Implementation Notes
+
+* ADC channel selection is performed by writing `1` to the ADC device
+* All calculations are done using `awk` for portability
+* Percentage thresholds are explicit and easy to tune
+
+---
+
+## Integration Ideas
+
+* Combine with **LED utility** for battery status indication
+* Use in **startup scripts** or **status banners**
+* Trigger low-battery payloads or safe shutdown logic
+* Feed into higher-level daemons (e.g. battery monitor service)
+
+---
+
+## Limitations
+
+* Percentage is an **approximation**, not coulomb counting
+* Accuracy depends on ADC calibration and voltage divider tolerance
+* Instantaneous voltage can fluctuate under load
+
+---
+
+`BATTERY` follows the Lichee-Jack design philosophy: **small, transparent, and predictable**.
+

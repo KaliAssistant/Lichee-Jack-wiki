@@ -1,0 +1,72 @@
+---
+title: Battery Management
+---
+
+import { Cards, Image } from 'nextra/components'
+
+# Battery Management
+
+Lichee-Jack uses a **200 mAh 402030 Li‑Po battery** with the **TP5400** power management IC, providing **1 hour or more** of typical uptime depending on workload.
+
+## Power Path / UPS Design
+
+The Lichee-Jack external board implements a simple **UPS‑like power path** using the **LM66100DKCR** ideal diode controller, combined with discrete MOSFETs and Schottky diodes.
+
+This design allows:
+
+* Powering the system directly from **USB Type‑C** when connected
+* **Seamless automatic switchover** to battery power when USB is unplugged
+* No reboot or brown‑out during power source transitions
+
+<br/>
+<Image src="/assets/POWER_SCH.png" />
+
+> The LM66100 provides low forward voltage drop and reverse current blocking, making it suitable for compact battery‑backed embedded systems.
+
+## Battery Voltage Monitoring (SAR ADC)
+
+Lichee-Jack uses the **SAR ADC** built into the **LicheeRV Nano SoC** to monitor battery voltage.
+
+* ADC pin: **GPIOB_3**
+* Driver: **CVITEK SARADC in‑kernel driver**
+* Resolution: **12‑bit (0–4095)**
+
+### Initializing the ADC Channel
+
+The SARADC driver is exposed as a character device. Before reading, the channel must be selected once:
+
+```sh
+echo 1 > /dev/cvi-saradc0
+```
+
+> This initializes the driver and selects **channel 1** for subsequent reads.
+
+### Reading ADC Values
+
+```sh
+cat /dev/cvi-saradc0 2>/dev/null
+```
+
+Returned value range:
+
+```
+0 – 4095
+```
+
+These raw values can be converted to voltage in user space based on:
+
+* ADC reference voltage
+* External resistor divider ratio (if used)
+
+This mechanism is used by user‑space daemons (such as battery or power management services) to estimate battery level, trigger low‑power warnings, or initiate safe shutdown.
+
+## Notes
+
+* The ADC channel selection only needs to be done once after boot
+* Subsequent reads do **not** require re‑initialization unless the channel is changed
+* Reading from the device is non‑blocking and lightweight, suitable for periodic polling
+
+---
+
+This design keeps battery management **simple, robust, and fully Linux‑native**, without relying on proprietary fuel‑gauge ICs.
+

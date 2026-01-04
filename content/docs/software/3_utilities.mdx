@@ -1,0 +1,231 @@
+---
+
+asIndexPage: true
+title: Utilities
+---
+
+import { Cards, Image } from 'nextra/components'
+
+# Utilities
+
+This section documents **Lichee-Jack core utilities**, including their purpose, behavior, and typical usage patterns.
+All utility source code is hosted on GitHub:
+
+* **Repository**: `github.com/KaliAssistant/Lichee-Jack-utils`
+
+These tools are designed to be:
+
+* Lightweight (shell / small native helpers)
+* Scriptable (payload-friendly)
+* Safe for embedded usage
+* Closely integrated with Lichee-Jack hardware features
+
+---
+
+## LED
+
+One-time or background control utility for RGB LED effects.
+Primarily used as a wrapper daemon for **shmled**.
+
+Typical use cases:
+
+* Status indication (boot, error, network)
+* Payload visual feedback
+
+<Cards num={1}>
+  <Cards.Card arrow title="LED" href="/docs/software/3_utilities/01_LED" />
+</Cards>
+
+---
+
+## AUDIOCTL
+
+Speaker and microphone volume control helper.
+
+Features:
+
+* Speaker volume adjustment
+* Microphone gain control
+* Safe default limits for onboard amplifier
+
+<Cards num={1}>
+  <Cards.Card arrow title="AUDIOCTL" href="/docs/software/3_utilities/02_AUDIOCTL" />
+</Cards>
+
+---
+
+## BATTERY
+
+Battery voltage and status reader based on SAR ADC.
+
+Features:
+
+* Raw voltage readout
+* Percentage estimation
+* Low-battery threshold detection
+
+<Cards num={1}>
+  <Cards.Card arrow title="BATTERY" href="/docs/software/3_utilities/03_BATTERY" />
+</Cards>
+
+---
+
+## NETMODE
+
+Network mode controller for **end0**.
+
+Supports:
+
+* NetworkManager (nmcli) profiles
+* Custom static / scripted configurations
+
+Typical use cases:
+
+* Switching between attack / management networks
+* Fast reconfiguration during payload execution
+
+<Cards num={1}>
+  <Cards.Card arrow title="NETMODE" href="/docs/software/3_utilities/04_NETMODE" />
+</Cards>
+
+---
+
+## RUN
+
+Payload execution controller.
+
+Features:
+
+* Execute MOD1 / MOD2 payloads
+* Run custom binaries or scripts
+* Unified execution entry point
+
+<Cards num={1}>
+  <Cards.Card arrow title="RUN" href="/docs/software/3_utilities/05_RUN" />
+</Cards>
+
+---
+
+## SWITCH
+
+Reads the hardware **mode switch** via the mod-switch kernel driver.
+
+Features:
+
+* Stable state detection
+* Script-friendly output
+* Used by jackstart and payload logic
+
+<Cards num={1}>
+  <Cards.Card arrow title="SWITCH" href="/docs/software/3_utilities/06_SWITCH" />
+</Cards>
+
+---
+
+## UDHCPCTL
+
+Helper for managing multiple **udhcpd** instances.
+
+Implementation:
+
+* Uses systemd template units
+* Service format: `udhcpd@<unit>.service`
+
+Typical use cases:
+
+* USB gadget DHCP
+* Isolated payload networks
+
+<Cards num={1}>
+  <Cards.Card arrow title="UDHCPCTL" href="/docs/software/3_utilities/07_UDHCPCTL" />
+</Cards>
+
+---
+
+## UDISKCTL
+
+USB disk image mount helper.
+
+Features:
+
+* Loop-device based image mounting
+* Safe mount / unmount handling
+* Payload-friendly storage access
+
+<Cards num={1}>
+  <Cards.Card arrow title="UDISKCTL" href="/docs/software/3_utilities/08_UDISKCTL" />
+</Cards>
+
+---
+
+## USBMODE
+
+USB gadget mode controller.
+
+Controls USB gadget configurations via:
+
+* systemd units: `gt@<mode>.service`
+
+Supported modes typically include:
+
+* ECM / RNDIS
+* HID
+* Mass Storage
+
+<Cards num={1}>
+  <Cards.Card arrow title="USBMODE" href="/docs/software/3_utilities/09_USBMODE" />
+</Cards>
+
+---
+
+## USBNET
+
+USB network interface helper for **usb0**.
+
+Features:
+
+* IP assignment
+* Link state monitoring
+* Integration with USBMODE and UDHCPCTL
+
+<Cards num={1}>
+  <Cards.Card arrow title="USBNET" href="/docs/software/3_utilities/10_USBNET" />
+</Cards>
+
+---
+
+## WIFIMODE
+
+Wi-Fi interface mode switcher.
+
+Supports:
+
+* Client / AP mode switching
+* Fast role changes for payload execution
+
+<Cards num={1}>
+  <Cards.Card arrow title="WIFIMODE" href="/docs/software/3_utilities/11_WIFIMODE" />
+</Cards>
+
+---
+
+## jackstart
+
+Core Lichee-Jack system daemon.
+
+Responsibilities:
+
+* Early boot initialization
+* Mode switch handling
+* Automatic utility coordination
+* Payload dispatch
+
+<Cards num={1}>
+  <Cards.Card arrow title="jackstart" href="/docs/software/3_utilities/12_jackstart" />
+</Cards>
+
+---
+
+> This utilities layer forms the **runtime backbone** of Lichee-Jack.
+> Most higher-level behaviors are composed by chaining these tools together.
+

@@ -1,0 +1,156 @@
+---
+title: AUDIOCTL
+---
+
+# AUDIOCTL
+
+`AUDIOCTL` is a **minimal ALSA command-line helper** for controlling the onboard **microphone** and **speaker** audio paths on **Lichee-Jack**.
+
+It is designed for **scripts, payloads, and automation**, providing a stable abstraction over `amixer` control names used by the CV181x audio subsystem.
+
+---
+
+## Features
+
+* Control **microphone capture volume**
+* Control **speaker playback volume**
+* Mute / unmute microphone
+* Mute / unmute speaker
+* No background daemon
+* Script-friendly and deterministic
+
+---
+
+## Dependencies
+
+* `alsa`
+* `amixer`
+
+These are included by default in the Lichee-Jack Debian image.
+
+---
+
+## Audio Topology
+
+```
+Mic (Digital / ADC)
+        │
+        ▼
+ ADC Capture Volume / Mute   (hw:0)
+        │
+        ▼
+     ALSA
+ 
+ 
+Speaker
+        ▲
+        │
+ DAC Playback Volume / MUTE (hw:1)
+        ▲
+        │
+     ALSA
+```
+
+* **hw:0** → ADC (microphone capture path)
+* **hw:1** → DAC (speaker playback path)
+
+---
+
+## Usage
+
+```sh
+AUDIOCTL <COMMAND> [VALUE]
+```
+
+### Commands
+
+| Command         | Description                   |
+| --------------- | ----------------------------- |
+| `MICVOL <0-24>` | Set microphone capture volume |
+| `SPKVOL <0-32>` | Set speaker playback volume   |
+| `MICMUTE`       | Mute microphone               |
+| `MICUNMUTE`     | Unmute microphone             |
+| `SPKMUTE`       | Mute speaker                  |
+| `SPKUNMUTE`     | Unmute speaker                |
+
+---
+
+## Examples
+
+### Set Microphone Volume
+
+```sh
+AUDIOCTL MICVOL 12
+```
+
+Valid range: **0 – 24**
+
+---
+
+### Set Speaker Volume
+
+```sh
+AUDIOCTL SPKVOL 20
+```
+
+Valid range: **0 – 32**
+
+> [!WARNING] 
+>
+> High speaker volume is **not recommended** due to the small onboard amplifier and speaker.
+
+---
+
+### Mute / Unmute Microphone
+
+```sh
+AUDIOCTL MICMUTE
+AUDIOCTL MICUNMUTE
+```
+
+---
+
+### Mute / Unmute Speaker
+
+```sh
+AUDIOCTL SPKMUTE
+AUDIOCTL SPKUNMUTE
+```
+
+---
+
+## Implementation Details
+
+Internally, `AUDIOCTL` is a small shell script that wraps `amixer cset` calls:
+
+* Microphone controls:
+
+  * `ADC Capture Volume`
+  * `ADC Capture Mute`
+
+* Speaker controls:
+
+  * `DAC Playback Volume`
+  * `DAC Playback MUTE`
+
+Explicit numeric ranges are enforced to avoid invalid ALSA states.
+
+---
+
+## Design Notes
+
+* No parsing of `amixer` output → predictable behavior
+* Explicit `hw:X` selection avoids card index ambiguity
+* Intended for **payload scripts**, **mode switch hooks**, and **startup tasks**
+
+---
+
+## Integration Ideas
+
+* Bind to **Mode Switch** positions
+* Use in **USB gadget payloads** (HID + audio feedback)
+* Combine with LED utilities for audio state indication
+
+---
+
+`AUDIOCTL` follows the Lichee-Jack philosophy: **simple, explicit, and hackable**.

@@ -1,0 +1,143 @@
+---
+title: NETMODE
+---
+
+# NETMODE
+
+`NETMODE` is a **network mode controller** for **Lichee-Jack**, designed to manage the primary Ethernet interface **`end0`** using **NetworkManager**.
+
+It provides a unified command-line interface to switch between **DHCP client**, **DHCP server**, **static IP**, and an **AUTO detection mode** that infers network behavior by passively sniffing DHCP traffic.
+
+---
+
+## Features
+
+* Switch `end0` between common network roles
+* Integrates cleanly with **NetworkManager** (`nmcli`)
+* Optional **embedded DHCP server** using `udhcpd`
+* Passive **AUTO mode** using DHCP traffic inspection
+* Script-friendly and deterministic
+* LED feedback for AUTO decision results
+
+---
+
+## Dependencies
+
+* `NetworkManager`
+* `nmcli`
+* `tcpdump`
+* `udhcpd` (controlled via `UDHCPCTL`)
+* `LED` utility (optional, for visual feedback)
+
+All dependencies are included in the Lichee-Jack system image.
+
+---
+
+## Supported Modes
+
+| Mode          | Description                                        |
+| ------------- | -------------------------------------------------- |
+| `DHCP_CLIENT` | Bring up DHCP client connection on `end0`          |
+| `DHCP_SERVER` | Bring up DHCP server connection and start `udhcpd` |
+| `STATIC`      | Bring up static IP connection                      |
+| `AUTO`        | Sniff network traffic and decide client or server  |
+| `STOP_ALL`    | Deactivate all active connections on `end0`        |
+| `<custom>`    | Bring up a named NetworkManager connection         |
+
+---
+
+## Usage
+
+```sh
+NETMODE <MODE>
+```
+
+Examples:
+
+```sh
+NETMODE DHCP_CLIENT
+NETMODE DHCP_SERVER
+NETMODE STATIC
+NETMODE AUTO
+NETMODE STOP_ALL
+NETMODE my-custom-conn
+```
+
+---
+
+## AUTO Mode Logic
+
+AUTO mode performs **passive DHCP inspection** on `end0` for up to **15 seconds**:
+
+```text
+Listen for:
+  UDP src port 68 → dst port 67
+```
+
+### Decision Rules
+
+* **No DHCP traffic detected** → fallback to `DHCP_CLIENT`
+* **DHCP Discover without Request** → assume no DHCP server → `DHCP_SERVER`
+* **DHCP Request detected** → DHCP server exists → `DHCP_CLIENT`
+
+This allows Lichee-Jack to adapt automatically when plugged into:
+
+* An unmanaged switch
+* A PC Ethernet port
+* An existing LAN
+
+---
+
+## LED Feedback (AUTO Mode)
+
+During AUTO mode, LED colors indicate the selected role:
+
+| Mode Selected | LED Pattern           |
+| ------------- | --------------------- |
+| DHCP Server   | Purple ↔ Yellow blink |
+| DHCP Client   | Purple ↔ White blink  |
+
+This provides immediate, headless feedback.
+
+---
+
+## Connection Management
+
+Before activating any mode, `NETMODE`:
+
+1. Stops `udhcpd` (if running)
+2. Finds all **active NetworkManager connections** bound to `end0`
+3. Deactivates them cleanly
+
+This ensures only **one active network role** exists at any time.
+
+---
+
+## Implementation Notes
+
+* Uses `nmcli con up/down` exclusively
+* Explicit interface binding avoids ambiguity
+* Logging is sent to `syslog` using tag `LicheeJack`
+* `set -o pipefail` ensures early failure detection
+
+---
+
+## Integration Ideas
+
+* Bind AUTO mode to **Mode Switch** position
+* Use in **USB gadget payloads** with Ethernet
+* Combine with `BATTERY` for power-aware networking
+* Use LED signaling for headless diagnostics
+
+---
+
+## Limitations
+
+* AUTO mode relies on **passive sniffing**, not active probing
+* Requires `tcpdump` permission on `end0`
+* Assumes preconfigured NetworkManager connection profiles
+
+---
+
+`NETMODE` follows the Lichee-Jack philosophy: **adaptive, explicit, and automation-first**.
+

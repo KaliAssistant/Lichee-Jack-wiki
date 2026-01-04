@@ -1,0 +1,129 @@
+---
+title: Environment Setup
+---
+
+# Environment Setup
+
+This section describes the recommended host environment and basic tools required to work with **Lichee-Jack**.
+
+---
+
+## 1. Host System
+
+A **UNIX-like operating system** is strongly recommended.
+
+### Recommended OS
+
+* **Debian** (stable or testing)
+* **Kali Linux**
+* **Ubuntu**
+
+### Architecture
+
+* **x86_64 only**
+
+The official host toolchain is:
+
+```text
+riscv64-musl-gxx-x86_64
+```
+
+Other architectures are **not supported**.
+
+> [!WARNING]
+>
+> ### Windows Users ⚠️
+>
+> If you are using **Microsoft Windows**, you **must** run Linux via one of the following:
+>
+> * Virtual Machine (VM)
+> * Docker / Podman
+> * Kubernetes environment
+>
+> Native Windows builds are **not supported**.
+
+---
+
+## 2. SFTP / File Browser
+
+You will need an SFTP-capable file manager to interact with the device filesystem.
+
+### Linux
+
+Most Linux desktop environments already include SFTP support via **GVFS**.
+
+Examples:
+
+* **Thunar** (recommended)
+* Nautilus
+* Dolphin
+
+You can also use the terminal:
+
+```bash
+sftp user@device_ip
+```
+
+### Windows / macOS
+
+You may need a third-party client, such as:
+
+* **FileZilla**
+* Any FTP/SFTP-capable file manager
+
+The CLI `sftp` command is also supported if available.
+
+---
+
+## 3. USB OTG (USB Gadget Mode)
+
+Lichee-Jack (and similar devices) support **Linux USB Gadget** mode and can present themselves as:
+
+* CDC-ECM
+* CDC-NCM
+* CDC-EEM
+* RNDIS
+
+### Windows
+
+* **Windows 10** and **Windows 11 < 22H2**
+
+  * The device does **not auto-probe correctly**
+  * Manual driver binding is required via **Device Manager**
+
+* **Windows 11 (22H2 and later)**
+
+  * Works out of the box
+  * Microsoft finally fixed this behavior
+
+### Linux
+
+* Works out of the box
+* Drivers are **built into the kernel**
+* Works even with **custom VID / PID**
+
+No additional configuration is required.
+
+### macOS
+
+* Should work correctly on **macOS 15 or later**
+* Earlier versions may have limited support depending on gadget mode
+
+---
+
+> [!NOTE]
+>
+> USB gadget functions are implemented using **ConfigFS**
+> No legacy `echo > /sys/kernel/...` hacks are used
+> Configuration is declarative and reproducible
+
+---
+
+> [!TIP]
+>
+> If you encounter issues:
+> 
+> * Check kernel logs (`dmesg`)
+> * Verify USB gadget configuration
+> * Confirm host OS compatibility
+

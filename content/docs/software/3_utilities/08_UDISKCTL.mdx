@@ -1,0 +1,130 @@
+---
+title: UDISKCTL
+---
+
+# UDISKCTL
+
+`UDISKCTL` is a small helper utility used by **Lichee-Jack** to mount and unmount USB disk image files via Linux loop devices. It is primarily designed to support **USB Mass Storage (UMS) payloads** when operating in USB gadget mode.
+
+This tool abstracts the low-level `mount`, `umount`, and `losetup` logic into a safe, predictable interface suitable for automated payload execution.
+
+---
+
+## Background / Story
+
+Originally, Lichee-Jack was designed to expose a **~100–200 MiB VFAT USB mass‑storage disk** to the host using **`gt` (USB gadgets)**. Payloads and loot were meant to be managed directly via this virtual USB disk.
+
+In practice, testing revealed several reliability issues:
+
+* Sudden **power cut‑off via the hardware mode switch** could corrupt the VFAT filesystem
+* The filesystem would occasionally enter **FAT protection mode (read‑only)**
+* In some cases, **loot data was lost** after unsafe removal
+
+To mitigate this, Lichee-Jack switched to using **SFTP** for payload and data management, greatly improving robustness.
+
+The `UDISKCTL` logic is inspired by the **Hak5 BashBunny** design, but on Lichee-Jack it is now **mainly useful in USBMODE = UMS scenarios**, where a disk image still needs to be exposed deliberately.
+
+---
+
+## Purpose
+
+* Mount a disk image file (`.img`) to a directory using a loop device
+* Safely unmount the image and clean up associated loop devices
+* Handle lazy unmounts to avoid blocking on busy files
+* Provide clear logging for payload debugging
+
+---
+
+## Supported Actions
+
+### Mount a disk image
+
+```
+UDISKCTL MOUNT <image> <mountpoint>
+```
+
+* Attaches the image to a loop device
+* Mounts it read‑write with execution enabled
+* Logs all output via `logger` (`LicheeJack` tag)
+
+### Unmount a disk image
+
+```
+UDISKCTL UMOUNT <image>
+```
+
+* Detects the associated loop device automatically
+* Syncs pending writes
+* Performs a **lazy + forced unmount** if required
+* Detaches the loop device after unmount
+
+---
+
+## Behavior Details
+
+### MOUNT
+
+* Uses:
+
+  * `mount -o loop,rw,exec`
+* Fails immediately if mounting is unsuccessful
+* Intended to be called before enabling USB UMS gadget mode
+
+### UMOUNT
+
+* Calls `sync` to flush buffers
+* Locates loop device via:
+
+  * `losetup -j <image>`
+* If mounted:
+
+  * Performs `umount -lf` on the mount point
+* If not mounted but loop exists:
+
+  * Detaches the loop device directly
+* Errors out if the image is not attached to any loop device
+
+---
+
+## Logging
+
+All operations are logged using:
+
+* Tag: `LicheeJack`
+* Normal messages: `[*]`
+* Error messages: `[!]`
+
+This makes `UDISKCTL` behavior traceable via `journalctl` or syslog.
+
+---
+
+## Typical Usage Scenario
+
+1. Payload prepares a disk image
+2. `UDISKCTL MOUNT udisk.img /mnt/udisk`
+3. USB gadget switches to **UMS mode**
+4. Host accesses the virtual disk
+5. Before mode switch or power cut:
+
+   * `UDISKCTL UMOUNT udisk.img`
+
+This sequence minimizes filesystem corruption risks.
+
+---
+
+## Notes & Limitations
+
+* Not intended for permanent storage
+* VFAT images are still vulnerable to unsafe removal
+* Prefer **SFTP-based payload and loot management** when possible
+* Best suited for **controlled demo or UMS-only payloads**
+
+---
+
+## Related Components
+
+* USB gadget framework (`gt`)
+* `RUN` – payload dispatcher
+* `SWITCH` – hardware mode selection
+* `NETMODE` – network role controller
+

@@ -1,0 +1,146 @@
+---
+title: WIFIMODE
+---
+
+# WIFIMODE
+
+`WIFIMODE` is the Wi-Fi interface mode switcher for **Lichee-Jack**.
+It safely recreates `wlan0` with the correct interface type and NetworkManager state, avoiding common `cfg80211` / driver conflicts when switching between client, AP, and monitor modes.
+
+This utility is especially important on embedded platforms (CV181x + AIC8800) where changing Wi-Fi modes **in-place** is unreliable.
+
+---
+
+## Why WIFIMODE exists
+
+On Lichee-Jack, Wi-Fi is used for very different purposes:
+
+* Normal Wi-Fi client connectivity (managed by NetworkManager)
+* Software AP / rogue AP (hostapd)
+* Active monitor mode with frame injection (Wi-Fi auditing)
+
+Simply toggling modes often leaves the driver in a broken state.
+`WIFIMODE` solves this by:
+
+* **Deleting `wlan0` completely**
+* **Re-creating it with `iw`** using the correct interface type
+* Explicitly telling **NetworkManager** whether it should manage the interface
+
+This guarantees a clean, predictable Wi-Fi state.
+
+---
+
+## Supported modes
+
+| Mode        | Description                           | Typical Use               |
+| ----------- | ------------------------------------- | ------------------------- |
+| `MANAGED`   | NetworkManager-controlled client mode | Normal Wi-Fi networking   |
+| `UNMANAGED` | Manual control (NM disabled)          | `hostapd`, custom scripts |
+| `MONITOR`   | Active monitor mode with injection    | Auditing, frame injection |
+
+---
+
+## Usage
+
+```sh
+WIFIMODE <MODE>
+```
+
+### Examples
+
+#### Managed (Wi-Fi client)
+
+```sh
+WIFIMODE MANAGED
+```
+
+* Recreates `wlan0` as a **managed** interface
+* Enables NetworkManager control
+
+#### Unmanaged (AP / hostapd)
+
+```sh
+WIFIMODE UNMANAGED
+```
+
+* Recreates `wlan0` as a normal interface
+* Disables NetworkManager control
+* Required before running `hostapd`
+
+#### Active monitor mode
+
+```sh
+WIFIMODE MONITOR
+```
+
+* Deletes `wlan0`
+* Recreates it as an **active monitor** interface
+* Supports frame injection
+
+---
+
+## Internal behavior
+
+1. Detect existing `wlan0`
+2. Delete the interface using `iw dev wlan0 del`
+3. Detect PHY name automatically
+4. Recreate `wlan0` with the requested type
+5. Apply NetworkManager managed / unmanaged state
+
+This delete-and-recreate approach prevents:
+
+* `Device busy` errors
+* Broken monitor mode
+* NetworkManager re-grabbing interfaces unexpectedly
+
+---
+
+## Dependencies
+
+* `iw`
+* `nmcli`
+* `jq`
+
+These are included by default in Lichee-Jack images.
+
+---
+
+## Notes & limitations
+
+* Only operates on **wlan0**
+* Assumes a single Wi-Fi PHY (default on Lichee-Jack)
+* Monitor mode requires a patched AIC8800 driver (frame injection enabled)
+
+---
+
+## Typical workflows
+
+### Wi-Fi client
+
+```sh
+WIFIMODE MANAGED
+nmcli device wifi connect <SSID>
+```
+
+### Rogue AP / captive portal
+
+```sh
+WIFIMODE UNMANAGED
+hostapd hostapd.conf
+```
+
+### Audit / sniffing
+
+```sh
+WIFIMODE MONITOR
+iw dev wlan0 set channel 6
+airodump-ng wlan0
+```
+
+---
+
+## Summary
+
+`WIFIMODE` is a **hard reset switch** for Wi-Fi operation modes.
+If Wi-Fi behaves strangely, switching modes fails, or monitor mode refuses to inject frames — this tool is the correct and safe way to recover.
+

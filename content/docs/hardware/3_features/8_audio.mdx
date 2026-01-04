@@ -1,0 +1,92 @@
+---
+title: Audio System
+---
+
+# Audio System
+
+Lichee-Jack integrates a compact audio subsystem suitable for voice prompts, alerts, and basic audio playback/recording.
+
+* **Speaker**: 10 × 10 mm round, **1 W**, 8 Ω
+* **Microphone**: Onboard **16‑bit digital MEMS microphone** (on LicheeRV Nano)
+* **Audio Codec (ADAC)**: `cv181x-adac`
+* **Power Amplifier**: **AW8010AFCR** (onboard)
+
+## Speaker & Amplifier
+
+The onboard amplifier **AW8010AFCR** drives the internal speaker directly.
+
+Typical characteristics:
+
+* Supply voltage: **5 V**
+* Output power: **≈ 1 W @ 8 Ω**
+* Test condition: `VDD = 5 V, RL = 8 Ω, f = 1 kHz`
+* Efficiency: **≈ 90%**
+
+> [!WARNING]
+>
+> **Volume warning**
+>
+> Lichee-Jack uses a **1 W speaker**. During testing, **100% playback volume** is intended for **2 W speakers**.
+>
+> **Do NOT set playback volume above 80%**, otherwise long‑term use may:
+>
+> * Cause audible distortion
+> * Damage the speaker
+> * Overheat the PA
+
+## Microphone
+
+The LicheeRV Nano includes an onboard **SMD MEMS microphone**:
+
+* Model: **LMA2718T421‑OA5‑2**
+* Sensitivity: **−42 dB**
+* Signal‑to‑Noise Ratio (SNR): **55 dB**
+
+> [!NOTE]
+>
+> When the capture volume is set to **maximum (24)**, recording quality degrades significantly (clipping + noise).
+>
+> Recommended capture volume: **20**
+
+## ALSA Control
+
+Audio input/output levels are controlled via **ALSA**.
+
+### Microphone (ADC)
+
+```sh
+amixer -D hw:0 cset name='ADC Capture Volume' <0-24>
+```
+
+* Range: `0 – 24`
+* Recommended: `20`
+
+### Speaker (DAC)
+
+```sh
+amixer -D hw:1 cset name='DAC Playback Volume' <0-32>
+```
+
+* Range: `0 – 32`
+* Recommended max: **≤ 80% (~25)**
+
+## Practical Recommendations
+
+* Keep playback volume **≤ 80%** for daily use
+* Avoid maximum ADC gain when recording
+* For voice prompts or system sounds, moderate volume provides the best clarity
+* If external speakers are required, use an **external amplified speaker** instead of pushing the onboard PA
+
+## Summary
+
+The Lichee-Jack audio system is optimized for **low‑power, embedded audio use cases**:
+
+* Clean voice output
+* Basic audio feedback
+* Acceptable voice recording quality
+
+Proper volume configuration is essential to maintain audio quality and hardware reliability.
+
+
+
+

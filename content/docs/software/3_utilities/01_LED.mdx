@@ -1,0 +1,197 @@
+---
+title: LED
+---
+
+# LED
+
+This utility provides a **simple WS2812B RGB LED controller** for **Lichee-Jack**.
+
+It is implemented as a small shell wrapper around the `shmled` utility, which is written in C and acts as a **shared memory writer** for the `ws2812b-gpio` kernel driver.
+
+`shmled` updates RGB frames in shared memory, while the kernel driver continuously reads and outputs them to the WS2812B LED.
+
+---
+
+## Architecture Overview
+
+```
+Userspace
+┌──────────────┐
+│   LED script │
+└──────┬───────┘
+       │
+┌──────▼───────┐
+│    shmled    │  (shared memory writer)
+└──────┬───────┘
+       │ SHM
+┌──────▼───────┐
+│ ws2812-gpio  │  (kernel driver)
+└──────┬───────┘
+       │ GPIO
+┌──────▼───────┐
+│   WS2812B    │
+└──────────────┘
+```
+
+---
+
+## LED Wrapper Script
+
+The `LED` script ensures that only **one instance** of `shmled` is running.
+
+When invoked, it:
+
+1. Checks for an existing `shmled` process
+2. Terminates it if found
+3. Starts a new `shmled` instance with the given arguments
+
+```sh
+if pgrep -f shmled; then
+    pkill shmled > /dev/null 2>&1
+fi
+
+shmled "$@" &
+```
+
+This makes it convenient to switch LED modes without manually managing processes.
+
+---
+
+## Usage
+
+```sh
+root@licheejack:~# shmled -h
+shmLED - Shared memory RGB LED writer for Lichee-Jack WS2812-GPIO Driver
+
+Usage: shmled -c #RRGGBB -i <rgb bin file input> [-l -i|-b|-d|-r] [-s µs]
+
+-c :    #RRGGBB, rgb hex code
+-i :    <input.bin>, rgb bin file input, format: \xRR\xGG\xBB ...
+
+-l :    loop mode:
+    -b :    blink
+    -d :    fade
+    -r :    rainbow
+    -i :    same as rgb file input, but loop mode
+
+-s :    delay µs per frame
+-h :    show this help
+
+Version 0.0.1-licheejack By KaliAssistant
+Github: https://github.com/KaliAssistant/Lichee-Jack-utils.git
+```
+
+---
+
+## Basic Examples
+
+### Set a Static Color
+
+Set LED to solid red:
+
+```sh
+LED -c #FF0000
+```
+
+Set LED to green:
+
+```sh
+LED -c #00FF00
+```
+
+---
+
+### Blink Mode
+
+Blink blue LED:
+
+```sh
+LED -c #0000FF -l -b -s 500000
+```
+
+---
+
+### Fade Mode
+
+Fade smoothly between colors:
+
+```sh
+LED -c #FF0000 -l -d -s 20000
+```
+
+---
+
+### Rainbow Mode
+
+Run built-in rainbow animation:
+
+```sh
+LED -l -r -s 30000
+```
+
+---
+
+## RGB Binary File Playback
+
+You can generate custom RGB animations using a **binary RGB file**.
+
+### RGB Binary Format
+
+Each frame consists of **3 bytes**:
+
+```
+\xRR \xGG \xBB
+```
+
+Frames are played sequentially.
+
+---
+
+### Generate a Simple RGB Pattern
+
+```sh
+printf "\xFF\x00\x00\xFF\x00\x00\xFF\x00\x00\x00\x00\xFF\x00\x00\xFF\x00\x00\xFF" > led.bin
+```
+
+This creates a pattern like:
+
+* Red
+* Red
+* Red
+* Blue
+* Blue
+* Blue
+* Red
+* Red
+* ...
+---
+
+### Play the RGB File
+
+```sh
+LED -l -i ./led.bin -s 50000
+```
+
+The LED will loop through the frames with a **50 ms delay**, producing a playful blinking effect ("cop cop").
+
+---
+
+## Notes
+
+* Delay (`-s`) is specified in **microseconds**
+* Only one `shmled` instance should run at a time
+* Designed for **single WS2812B LED** by default
+* Shared memory allows extremely low-latency updates
+
+---
+
+## See Also
+
+* `ws2812-gpio` kernel driver
+* `shmled` source code: [KaliAssistant/Lichee-Jack-utils](https://github.com/KaliAssistant/Lichee-Jack-utils/blob/main/shmled/src/shmled.c)
+* LED integration with `Mode Switch` and payload scripts
+
+---
+
+This utility is intended to be **simple, hackable, and script-friendly**, fitting the Lichee-Jack philosophy.
+

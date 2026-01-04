@@ -1,0 +1,71 @@
+---
+asIndexPage: true
+---
+
+import { Cards, Image } from 'nextra/components'
+
+# Hardware
+
+This section documents the **hardware design** of the Lichee-Jack project. All designs are **open-source**, reproducible, and intended for makers, researchers, and security professionals who want to build or modify the device themselves.
+
+You can explore the hardware in the following categories:
+
+---
+
+## PCB & FPC
+
+Mainboard schematics, PCB layout, FPC designs, power domains, signal routing notes, and manufacturing considerations.
+
+<Cards num={1}>
+  <Cards.Card arrow title="PCB & FPC" href="/docs/hardware/1_pcb">
+
+  </Cards.Card>
+</Cards>
+
+
+---
+
+## 3D Print Cases
+
+3D printable enclosure designs, STL sources, print settings, material recommendations, and assembly instructions.
+
+<Cards num={1}>
+  <Cards.Card arrow title="3D PRINT CASES" href="/docs/hardware/2_3dp">
+  </Cards.Card>
+</Cards>
+
+
+---
+
+## Extension modules
+
+Expansion and external modules, including GPIO, USB gadgets, sensors, LEDs, audio, and future add-on boards.
+
+<Cards num={1}>
+  <Cards.Card arrow title="EXT MODULES" href="/docs/hardware/extmodules">
+  </Cards.Card>
+</Cards>
+
+---
+
+## Design Philosophy
+
+* **Open-source hardware (OSHW)** – all design files are provided
+* **Modular** – core board + extension modules
+* **Hackable by design** – exposed test pads, headers, and debug interfaces
+* **Linux-first** – optimized for embedded Linux workflows
+
+## Toolchains & Formats
+
+* PCB: KiCad
+* Mechanical: STEP / STL
+* Manufacturing: Gerber, drill, pick-and-place
+
+> [!NOTE]
+>
+> Hardware revisions may change over time. Always check the revision tag that matches your board before manufacturing or assembling.
+
+---
+
+If you are new to the project, it is recommended to start with **PCB & FPC** to understand the system architecture, then move on to the **3D printed case** and **extension modules**.
+

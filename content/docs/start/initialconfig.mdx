@@ -1,0 +1,139 @@
+---
+title: Initial configuration
+---
+
+import { Cards, Image } from 'nextra/components'
+
+# Initial Configuration
+
+This section covers the **first boot**, **initial SSH access**, **basic security hardening**, and **network setup** for Lichee-Jack.
+
+---
+
+## First Boot & SSH Login
+
+On the **first power-on**, make sure the **mode switch is set to `mode 0 (debug)`**.
+
+Lichee-Jack exposes a **USB CDC-NCM** network interface to the host.
+
+Default credentials:
+
+* **root**
+  password: `toor`
+* **debian**
+  password: `licheejack`
+
+### Connect via USB (CDC-NCM)
+
+After plugging in the USB cable, your host should receive an IP automatically.
+
+```bash
+ssh root@10.42.0.1
+```
+
+(Optional) Copy your SSH public key:
+
+```bash
+ssh-copy-id root@10.42.0.1
+```
+
+> **Recommended:** Always use SSH keys instead of password authentication.
+
+---
+
+## Change Default Passwords (Strongly Recommended)
+
+Leaving default credentials is a **critical security risk**.
+
+### Change root password
+
+```bash
+passwd
+```
+
+### Change `debian` user password
+
+```bash
+su debian
+passwd
+```
+
+### Non-interactive method (for automation)
+
+```bash
+echo "debian:NEW_PASSWORD" | chpasswd
+```
+
+---
+
+## Wi-Fi Setup (Optional)
+
+Lichee-Jack uses **NetworkManager**.
+
+### TUI (recommended)
+
+```bash
+nmtui
+```
+
+* Select **Activate a connection**
+* Create or edit a Wi-Fi profile
+* Connect and verify
+
+### CLI (manual)
+
+```bash
+nmcli device wifi list
+nmcli device wifi connect "SSID_NAME" password "WIFI_PASSWORD"
+```
+
+Check status:
+
+```bash
+nmcli device status
+```
+
+---
+
+## System Update (⚠️ Read Carefully)
+
+Update package lists:
+
+```bash
+apt update
+```
+
+Check available upgrades:
+
+```bash
+apt list --upgradable -a
+```
+
+> [!WARNING]
+>
+> ⚠️ **Kernel & Bootloader Warning**
+> Do **NOT** upgrade the following packages:
+>
+> * `initramfs*`
+> * `linux-image-*`
+> * `linux-headers-*` (Debian official `riscv64` builds)
+>
+> Lichee-Jack boots **only** with the project-specific **U-Boot** and **linux-licheejack** kernel.
+> Blindly running `apt upgrade -y` may brick the device.
+
+### Safe Upgrade Method
+
+Manually upgrade **userland packages only**:
+
+```bash
+apt upgrade PACKAGE_NAME
+```
+
+Or explicitly hold kernel-related packages:
+
+```bash
+apt-mark hold linux-image-* linux-headers-* initramfs*
+```
+
+---
+

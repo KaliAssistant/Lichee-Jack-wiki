@@ -1,0 +1,169 @@
+---
+title: jackstart
+---
+
+# jackstart
+
+`jackstart` is the **core control daemon** of the Lichee-Jack platform.
+It runs continuously in the background and coordinates **mode switching**, **USB gadget roles**, **network behavior**, **LED status**, and **payload execution** based on the physical hardware switch state.
+
+In short, `jackstart` is the *brain* of Lichee-Jack.
+
+---
+
+## Responsibilities
+
+`jackstart` is responsible for:
+
+* Detecting the **hardware mode switch** position
+* Switching between **DEBUG / PAYLOAD modes** automatically
+* Initializing and controlling **USB gadget roles**
+* Managing **network interfaces** and **MAC randomization**
+* Controlling **RGB LED status indicators**
+* Launching **payload modules** safely
+* Enforcing service policies (SSH enable / disable)
+
+The daemon monitors the switch continuously and reacts **without rebooting** the system.
+
+---
+
+## Mode Overview
+
+| Mode         | Switch Position | Description                    |
+| ------------ | --------------- | ------------------------------ |
+| **DEBUG**    | default / none  | USB debug mode with SSH access |
+| **PAYLOAD1** | switch1         | Execute MOD1 payload           |
+| **PAYLOAD2** | switch2         | Execute MOD2 payload           |
+
+Mode transitions are handled automatically when the physical switch position changes.
+
+---
+
+## DEBUG Mode
+
+DEBUG mode is intended for **development, debugging, and recovery**.
+
+Behavior:
+
+* USB OTG forced into **device mode**
+* USB gadget set to **DEBUG** profile
+* USB network interface configured with **static IP**
+* DHCP server enabled for USB host
+* SSH service **enabled**
+* LED shows **blue slow pulse**
+
+Key operations:
+
+* `USBMODE DEBUG`
+* `USBNET SETIP 10.42.0.1/24`
+* `UDHCPCTL START debug-usb0`
+* `systemctl start ssh.service`
+
+This mode provides a stable management channel even if payloads fail.
+
+---
+
+## PAYLOAD1 Mode
+
+PAYLOAD1 mode executes **MOD1** payload logic.
+
+Behavior:
+
+* LED shows **cyan blink**
+* Ethernet MAC address is **randomized**
+* All USB gadgets are **disabled**
+* SSH service is **stopped**
+* Payload `MOD1` is executed via `RUN`
+
+Security-focused design:
+
+* Disables management access
+* Randomizes network identity
+* Payload runs in an isolated execution flow
+
+After payload execution, the system enters **IDLE** state and waits for switch changes.
+
+---
+
+## PAYLOAD2 Mode
+
+PAYLOAD2 mode is identical in structure to PAYLOAD1 but executes **MOD2**.
+
+Behavior:
+
+* LED shows **magenta blink**
+* Ethernet MAC address is **randomized**
+* USB gadgets disabled
+* SSH service stopped
+* Payload `MOD2` executed
+
+This allows multiple independent payload profiles without reflashing the system.
+
+---
+
+## LED Status Mapping
+
+`jackstart` uses the `LED` utility to indicate current system state:
+
+| Mode     | Color   | Pattern    |
+| -------- | ------- | ---------- |
+| DEBUG    | Blue    | Slow pulse |
+| PAYLOAD1 | Cyan    | Blink      |
+| PAYLOAD2 | Magenta | Blink      |
+
+This provides immediate visual feedback without serial or USB access.
+
+---
+
+## Switch Monitoring Logic
+
+After entering any mode, `jackstart` transitions into **IDLE mode**, which:
+
+* Polls the hardware switch every 2 seconds
+* Detects state changes
+* Triggers mode transitions only when required
+
+This prevents unnecessary restarts and ensures stable operation.
+
+---
+
+## External Dependencies
+
+`jackstart` relies on the following utilities:
+
+* `/usr/bin/SWITCH` – read hardware switch position
+* `/usr/bin/LED` – RGB LED controller
+* `/usr/bin/RUN` – payload execution wrapper
+* `USBMODE` – USB gadget profile manager
+* `USBNET` – USB network configuration
+* `UDHCPCTL` – DHCP server control
+* `macchanger` – MAC address randomization
+
+All dependencies are part of the Lichee-Jack userspace stack.
+
+---
+
+## Design Notes
+
+* Implemented as a **simple shell daemon** for transparency and auditability
+* No background magic: all state transitions are explicit
+* Payload failures do **not brick** the device
+* Hardware switch always has priority over software state
+
+`jackstart` is intentionally minimal, predictable, and easy to modify for custom payload workflows.
+
+---
+
+## Related Components
+
+* [`SWITCH`](/docs/software/3_utilities/06_SWITCH)
+* [`USBMODE`](/docs/software/3_utilities/09_USBMODE)
+* [`USBNET`](/docs/software/3_utilities/10_USBNET)
+* [`LED`](/docs/software/3_utilities/01_LED)
+* [`RUN`](/docs/software/3_utilities/05_RUN)
+
+---
+
+> **jackstart** ensures Lichee-Jack behaves like a true hardware implant platform:
+> deterministic, fast-switching, and operator-controlled.
+
