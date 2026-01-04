@@ -43,7 +43,7 @@ jobs:
           NEXT_PUBLIC_BASE_PATH: /Lichee-Jack-wiki
 
       - name: Post Build
-        run: pnpm postbuild
+        run: pnpm gh-postbuild
 
 
       - name: Upload Pages artifact
