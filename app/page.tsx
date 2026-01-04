@@ -12,7 +12,11 @@ import styles from './page.module.css'
 import './page.css'
 import type { FC } from 'react'
 import gpioCard from 'public/assets/20pgpio.png'
-import wifiCard from 'public/assets/wifi.png'
+import wifiCard from 'public/assets/wifi6bt5.png'
+import batteryCard from 'public/assets/battery.png'
+import usbCard from 'public/assets/usb.png'
+
+const debianCard = `${basePath}/assets/debian.svg`
 
 export const metadata: Metadata = {
   description:
@@ -91,6 +95,7 @@ const IndexPage: FC = () => {
               id="gpio-card"
               href="/docs/hardware/3_features/3_gpio"
               style={{
+                backgroundImage: `url(${gpioCard.src})`,
                 backgroundSize: 850,
                 backgroundRepeat: 'no-repeat',
                 minHeight: 270
@@ -112,6 +117,7 @@ const IndexPage: FC = () => {
               id="wifi-card"
               href="/docs/hardware/3_features/4_wireless"
               style={{
+                backgroundImage: `url(${wifiCard.src})`,
                 backgroundSize: 850,
                 backgroundRepeat: 'no-repeat',
                 minHeight: 370
@@ -171,6 +177,9 @@ const IndexPage: FC = () => {
               index={4}
               id="debian-card"
               href="/docs/software/1_system"
+              style={{
+                backgroundImage: `url(${debianCard})`,
+              }}
             >
               <h3>
                 Debian GNU/Linux <br className="show-on-mobile" />
@@ -190,6 +199,7 @@ const IndexPage: FC = () => {
               id="battery-card"
               href="/docs/hardware/3_features/6_battery"
               style={{
+                backgroundImage: `url(${batteryCard.src})`,
                 backgroundSize: 850,
                 backgroundRepeat: 'no-repeat',
                 minHeight: 370
@@ -210,6 +220,7 @@ const IndexPage: FC = () => {
               id="usb-card"
               href="/docs/hardware/3_features/7_usb"
               style={{
+                backgroundImage: `url(${usbCard.src})`,
                 backgroundSize: 850,
                 backgroundRepeat: 'no-repeat',
                 minHeight: 370
