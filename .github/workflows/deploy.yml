@@ -36,14 +36,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Post Build
-        run: pnpm postbuild
-
       - name: Build
         run: pnpm build
         env:
           GITHUB_ACTIONS: true
           NEXT_PUBLIC_BASE_PATH: /Lichee-Jack-wiki
+
+      - name: Post Build
+        run: pnpm postbuild
 
 
       - name: Upload Pages artifact
