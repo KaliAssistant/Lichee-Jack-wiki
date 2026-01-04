@@ -69,31 +69,31 @@
 #highlighting-card {
   min-height: 300px;
   background-image:
-    linear-gradient(to top, transparent, #fff 50%),
-    //url(/assets/syntax-highlighting.svg);
+    linear-gradient(to top, transparent, #fff 50%);
+    /*url(/assets/syntax-highlighting.svg);*/
   background-size: 634px;
   background-position: -6px calc(100% + 4px);
   background-repeat: no-repeat;
 }
 .dark #highlighting-card {
   background-image:
-    linear-gradient(to top, transparent, #202020 50%),
-    //url(/assets/syntax-highlighting.svg);
+    linear-gradient(to top, transparent, #202020 50%);
+    /*url(/assets/syntax-highlighting.svg);*/
 }
 
 #debian-card {
   min-height: 300px;
   background-image:
-    linear-gradient(to top, transparent, #fff 50%),
-    //url(/assets/debian.svg);
+    linear-gradient(to top, transparent, #fff 50%);
+    /*url(/assets/debian.svg);*/
   background-size: 134px;
   background-position: -6px calc(100% + 4px);
   background-repeat: no-repeat;
 }
 .dark #debian-card {
   background-image:
-    linear-gradient(to top, transparent, #202020 50%),
-    //url(/assets/debian.svg);
+    linear-gradient(to top, transparent, #202020 50%);
+    /*url(/assets/debian.svg);*/
 }
 
 
@@ -166,63 +166,63 @@
 #a11y-card {
   color: #fff;
   text-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
-  //background-image: url(/assets/high-contrast.png);
+  /*background-image: url(/assets/high-contrast.png);*/
   background-position: -160px 0px;
 }
 
 #gpio-card {
   color: #fff;
   text-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
-  //background-image: url(/assets/20pgpio.png);
+  /*background-image: url(/assets/20pgpio.png);*/
   background-position: -160px 0px;
 }
 
 #wifi-card {
   color: #fff;
   text-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
-  //background-image: url(/assets/wifi6bt5.png);
+  /*background-image: url(/assets/wifi6bt5.png);*/
   background-position: -160px -50px;
 }
 
 #battery-card {
   color: #fff;
   text-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
-  //background-image: url(/assets/battery.png);
+  /*background-image: url(/assets/battery.png);*/
   background-position: -160px -50px;
 }
 
 #usb-card {
   color: #fff;
   text-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
-  //background-image: url(/assets/usb.png);
+  /*background-image: url(/assets/usb.png);*/
   background-position: -160px -50px;
 }
 
 @media screen and (max-width: 1300px) {
   #a11y-card {
     background-image:
-      //linear-gradient(to bottom, white, transparent),
-      //url(/assets/high-contrast.png);
+      /*linear-gradient(to bottom, white, transparent),
+      url(/assets/high-contrast.png);*/
   }
   #gpio-card {
     background-image:
-      //linear-gradient(to bottom, white, transparent),
-      //url(/assets/20pgpio.png);
+      /*linear-gradient(to bottom, white, transparent),
+      url(/assets/20pgpio.png);*/
   }
   #wifi-card {
     background-image:
-      //linear-gradient(to bottom, white, transparent),
-      //url(/assets/wifi6bt5.png);
+      /*linear-gradient(to bottom, white, transparent),
+      //url(/assets/wifi6bt5.png);*/
   }
   #battery-card {
     background-image:
-      //linear-gradient(to bottom, white, transparent),
-      //url(/assets/battery.png);
+      /*linear-gradient(to bottom, white, transparent),
+      //url(/assets/battery.png);*/
   }
   #usb-card {
     background-image:
-      //linear-gradient(to bottom, white, transparent),
-      //url(/assets/usb.png);
+      /*linear-gradient(to bottom, white, transparent),
+      //url(/assets/usb.png);*/
   }
 }
 @media screen and (max-width: 1200px) {
@@ -282,23 +282,23 @@
     background-size: 30%;
   }
   #a11y-card {
-    //background-image: url(/assets/high-contrast.png);
+    /*background-image: url(/assets/high-contrast.png);*/
     background-position: center 0px;
   }
   #gpio-card {
-    //background-image: url(/assets/20pgpio.png);
+    /*background-image: url(/assets/20pgpio.png);*/
     background-position: center 0px;
   }
   #wifi-card {
-    //background-image: url(/assets/wifi6bt5.png);
+    /*background-image: url(/assets/wifi6bt5.png);*/
     background-position: center -50px;
   }
   #battery-card {
-    //background-image: url(/assets/battery.png);
+    /*background-image: url(/assets/battery.png);*/
     background-position: center -50px;
   }
   #usb-card {
-    //background-image: url(/assets/usb.png);
+    /*background-image: url(/assets/usb.png);*/
     background-position: center -50px;
   }
 }
@@ -369,6 +369,6 @@
     max-width: calc(100% + 3.5em);
   }
   .dark #search-card video {
-    //mix-blend-mode: lighten;
+    /*mix-blend-mode: lighten;*/
   }
 }
