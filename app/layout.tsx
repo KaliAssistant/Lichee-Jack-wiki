@@ -9,6 +9,10 @@ import {getPagesFromPageMap} from "@/lib/getPagesFromPageMap";
 export const metadata: Metadata = {
     // Define your metadata here
     // For more information on metadata API, see: https://nextjs.org/docs/app/building-your-application/optimizing/metadata
+    title: {
+        default: 'Lichee-Jack-wiki',
+        template: '%s | Lichee-Jack-wiki'
+    },
 }
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
