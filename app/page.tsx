@@ -1,5 +1,8 @@
 import { ArrowRightIcon } from '@components/icons'
 import type { Metadata } from 'next'
+
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
+
 import Image from 'next/image'
 import { Link } from 'nextra-theme-docs'
 import { MdxIcon } from 'nextra/icons'
@@ -68,7 +71,7 @@ const IndexPage: FC = () => {
               playsInline
               className="x:focus-visible:nextra-focus block dark:hidden"
             >
-              <source src="/assets/rgb_white.mp4" type="video/mp4" />
+              <source src={`${basePath}/assets/rgb_white.mp4`} type="video/mp4" />
             </video>
             <video
               autoPlay
@@ -77,7 +80,7 @@ const IndexPage: FC = () => {
               playsInline
               className="x:focus-visible:nextra-focus hidden -translate-x-4 dark:block"
             >
-              <source src="/assets/rgb_dark.mp4" type="video/mp4" />
+              <source src={`${basePath}/assets/rgb_dark.mp4`} type="video/mp4" />
             </video>
             </Feature>
 
@@ -150,7 +153,7 @@ const IndexPage: FC = () => {
               playsInline
               className="x:focus-visible:nextra-focus block dark:hidden"
             >
-              <source src="/assets/test_white.mp4" type="video/mp4" />
+              <source src={`${basePath}/assets/test_white.mp4`} type="video/mp4" />
             </video>
             <video
               autoPlay
@@ -159,7 +162,7 @@ const IndexPage: FC = () => {
               playsInline
               className="x:focus-visible:nextra-focus hidden -translate-x-4 dark:block"
             >
-              <source src="/assets/test_dark.mp4" type="video/mp4" />
+              <source src={`${basePath}/assets/test_dark.mp4`} type="video/mp4" />
             </video>
             
             </Feature>

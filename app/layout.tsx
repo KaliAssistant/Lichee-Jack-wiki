@@ -11,11 +11,12 @@ export const metadata: Metadata = {
     // For more information on metadata API, see: https://nextjs.org/docs/app/building-your-application/optimizing/metadata
 }
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
 
 const navbar = (
     <Navbar
         projectLink="https://github.com/KaliAssistant/Lichee-Jack"
-        logo={<img src="/images/general/logo.svg" alt="Logo" width={100} height={20}/>}
+        logo={<img src={`${basePath}/images/general/logo.svg`} alt="Logo" width={100} height={20}/>}
         // ... Your additional navbar options
     />
 )

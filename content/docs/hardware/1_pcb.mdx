@@ -2,14 +2,14 @@
 title: PCB & FPC
 ---
 
-import { Image, Cards } from 'nextra/components'
-
+import { Cards } from 'nextra/components'
+import { Img } from '@components/image'
 
 # PCB & FPC
  
- ---
+---
 
-<Image src="/assets/Lichee-Jack_ext-board_sch.svg" />
+<Img src="/assets/Lichee-Jack_ext-board_sch.svg" />
 
 This page documents the **core PCB and FPC architecture** of the Lichee-Jack hardware platform. The design is fully **open-source**, modular, and intended for reproducible manufacturing and hardware research.
 
@@ -40,9 +40,9 @@ LicheeRV Nano
 ## 1. Lichee-Jack_EXT_BOARD
 
 <br/>
-<Image src="/assets/ext_board_v1_2_btm.png" />
+<Img src="/assets/ext_board_v1_2_btm.png" />
 <br/>
-<Image src="/assets/ext_board_v1_2_top.png" />
+<Img src="/assets/ext_board_v1_2_top.png" />
 
 The **EXT_BOARD** is the main functional extension PCB. It provides power management, peripherals, and system control.
 
@@ -68,9 +68,9 @@ The **EXT_BOARD** is the main functional extension PCB. It provides power manage
 ## 2. Lichee-Jack_EXT_BOARD_FPC
 
 <br/>
-<Image src="/assets/ext_board_fpc_3dview.png" />
+<Img src="/assets/ext_board_fpc_3dview.png" />
 <br/>
-<Image src="/assets/ext_board_fpc_cadview.png" />
+<Img src="/assets/ext_board_fpc_cadview.png" />
 
 
 The **EXT_BOARD_FPC** is a flexible interconnect used to bridge signals between the LicheeRV Nano, EXT_BOARD, and HEADER_BOARD.
@@ -91,11 +91,11 @@ The **EXT_BOARD_FPC** is a flexible interconnect used to bridge signals between 
 ## 3. Lichee-Jack_HEADER_BOARD
 
 <br/>
-<Image src="/assets/header-board-top.png" />
+<Img src="/assets/header-board-top.png" />
 <br/>
-<Image src="/assets/header-board-btm.png" />
+<Img src="/assets/header-board-btm.png" />
 <br/>
-<Image src="/assets/header-board-freecad.png" />
+<Img src="/assets/header-board-freecad.png" />
 
 The **HEADER_BOARD** acts as an adapter and signal breakout layer for external extension modules.
 
@@ -138,9 +138,9 @@ The **HEADER_BOARD** acts as an adapter and signal breakout layer for external e
   * Sn42/Bi58 (recommended)
 
 <br/>
-<Image src="/assets/PABA_TOP.jpg" />
+<Img src="/assets/PABA_TOP.jpg" />
 <br/>
-<Image src="/assets/PCBA_BTM.jpg" />
+<Img src="/assets/PCBA_BTM.jpg" />
 <br/>
 
 ---
@@ -195,7 +195,7 @@ To assemble the system so it fits inside the 3D-printed case:
 
 
 <br/>
-<Image src="/assets/8P8C.jpg" />
+<Img src="/assets/8P8C.jpg" />
 <br/>
 
 
@@ -216,13 +216,13 @@ Supported manufacturers include:
 * Seeed Studio
 
 <br/>
-<Image src="/assets/JLCPCB1.png" />
+<Img src="/assets/JLCPCB1.png" />
 <br/>
-<Image src="/assets/JLCPCB2.png" />
+<Img src="/assets/JLCPCB2.png" />
 <br/>
-<Image src="/assets/JLCPCB3.png" />
+<Img src="/assets/JLCPCB3.png" />
 <br/>
-<Image src="/assets/JLCPCB4.png" />
+<Img src="/assets/JLCPCB4.png" />
 <br/>
 
 > [!IMPORTANT]

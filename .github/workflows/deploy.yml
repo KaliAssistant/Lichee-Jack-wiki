@@ -40,6 +40,8 @@ jobs:
         run: pnpm build
         env:
           GITHUB_ACTIONS: true
+          NEXT_PUBLIC_BASE_PATH: /Lichee-Jack-wiki
+
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

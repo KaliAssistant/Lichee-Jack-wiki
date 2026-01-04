@@ -2,11 +2,12 @@
 title: RGB LED
 ---
 
-import { Cards, Image } from 'nextra/components'
+import { Cards } from 'nextra/components'
+import { Img } from '@components/image'
 
 # RGB LED
 <br/>
-<Image src="/assets/RGB_LED_SAMPLE.jpg" />
+<Img src="/assets/RGB_LED_SAMPLE.jpg" />
 
 Lichee-Jack uses a **side‑view SMT WS2812B 4020 full‑color RGB LED (24‑bit)**.
 Only **one GPIO** is required to drive the LED by generating a ~**800 kHz–1 MHz** single‑wire pulse waveform.
@@ -215,7 +216,7 @@ static int ws_thread_fn(void *data)
 ## Result
 
 <br/>
-<Image src="/assets/osc_rgbled.png" />
+<Img src="/assets/osc_rgbled.png" />
 
 * Stable WS2812B control
 * Correct colors
