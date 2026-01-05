@@ -1,6 +1,8 @@
 import {Footer, Layout, Navbar} from 'nextra-theme-docs'
 import {Head} from 'nextra/components'
 import {getPageMap} from 'nextra/page-map'
+import Icon from '@/public/images/general/logo.svg?svgr'
+import cn from 'clsx'
 import './globals.css'
 import {Metadata} from "next";
 import {NextraSearchDialog} from "@/components/nextra-search-dialog";
@@ -13,6 +15,9 @@ export const metadata: Metadata = {
         default: 'Lichee-Jack-wiki',
         template: '%s | Lichee-Jack-wiki'
     },
+    other: {
+      'msapplication-TileColor': '#fff'
+    }
 }
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
@@ -20,7 +25,16 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
 const navbar = (
     <Navbar
         projectLink="https://github.com/KaliAssistant/Lichee-Jack"
-        logo={<img src={`${basePath}/images/general/logo.svg`} alt="Logo" width={100} height={20}/>}
+        logo={
+            <Icon  
+                height="35"
+                className={cn(
+                    'hover:transition-all hover:duration-1000 motion-reduce:hover:transition-none',
+                    '[mask-image:linear-gradient(60deg,#000_25%,rgba(0,0,0,.2)_50%,#000_75%)] [mask-size:400%] [mask-position:0]',
+                    'hover:[mask-position:100%]'
+                )}
+            />
+        }
         // ... Your additional navbar options
     />
 )
@@ -51,7 +65,7 @@ export default async function RootLayout({children}) {
         <Head
             // ... Your additional head options
         >
-            <link rel="shortcut icon" href={`${basePath}/images/general/icon.svg`}/>
+            // <link rel="shortcut icon" href={`${basePath}/images/general/icon.svg`}/>
             {/* Your additional tags should be passed as `children` of `<Head>` element */}
         </Head>
         <body>
