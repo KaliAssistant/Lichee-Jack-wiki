@@ -334,13 +334,13 @@ Expected build time:
 After a successful build, the output image is located at:
 
 ```
-sophgo-sg200x-debian/image/licheervnano-sd.img
+sophgo-sg200x-debian/image/licheervnano_sd.img
 ```
 
 Flash to SD card using `dd`:
 
 ```sh
-sudo dd if=licheervnano-sd.img of=/dev/sdX bs=4M status=progress conv=fsync
+sudo dd if=licheervnano_sd.img of=/dev/sdX bs=4M status=progress conv=fsync
 ```
 
 Or follow the full flashing guide:

@@ -41,20 +41,35 @@ High-end or expensive cards are unnecessary.
 
 1. Go to the GitHub releases page:
 
-   **KaliAssistant / Lichee-Jack**
+   [KaliAssistant/Lichee-Jack/releases](https://github.com/KaliAssistant/Lichee-Jack/releases/latest)
 
-2. Download:
+2. Download the following files:
 
-   * The **latest system image** (`.img`)
-   * The corresponding **checksum file**
+   * The **latest system image**: `licheervnano_sd.img.xz`
+   * The corresponding **checksum file**: `licheervnano_sd.img.sha256sum`
 
-3. Verify the image checksum (**important!**):
+3. Decompress the image:
 
-```bash
-sha256sum Lichee-Jack-*.img
-```
+   ```bash
+   xz -d licheervnano_sd.img.xz
+   ```
 
-Compare the output with the checksum provided in the release.
+   This will produce `licheervnano_sd.img` in the same directory.
+
+4. Verify the image checksum (**important!**):
+
+   ```bash
+   sha256sum -c licheervnano_sd.img.sha256sum
+   ```
+
+   You should see an output similar to:
+
+   ```text
+   licheervnano_sd.img: OK
+   ```
+
+   If the check fails, **do not flash the image**. Re-download both files and verify again.
+
 
 > [!WARNING]
 >
@@ -69,7 +84,7 @@ Compare the output with the checksum provided in the release.
 Use `dd` (simple and reliable):
 
 ```bash
-sudo dd if=/path/to/image.img of=/dev/sdX bs=4M status=progress conv=fsync
+sudo dd if=/path/to/licheervnano_sd.img of=/dev/sdX bs=4M status=progress conv=fsync
 ```
 
 > [!CAUTION]
