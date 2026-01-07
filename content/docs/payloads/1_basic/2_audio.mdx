@@ -1,0 +1,82 @@
+---
+title: Audio
+---
+
+# Audio
+
+This section documents **basic audio payload examples** for Lichee-Jack.
+
+Lichee-Jack provides audio control through the `AUDIOCTL` utility, allowing payloads to:
+
+* Control onboard **microphone (ADC)**
+* Control onboard **speaker (DAC)**
+* Adjust mute state and volume
+* Combine with standard ALSA tools (`arecord`, `aplay`) for capture and playback
+
+These examples are intentionally **simple and script-friendly**, suitable for payload chaining.
+
+---
+
+## Examples
+
+### Echo (Live Mic → Speaker)
+
+This example creates a **real-time audio loopback**, piping microphone input directly to the speaker.
+
+```sh showLineNumbers
+# Unmute onboard microphone and set ADC volume (0–24)
+AUDIOCTL MICUNMUTE
+AUDIOCTL MICVOL 5
+
+# Unmute speaker and set DAC volume (0–32)
+AUDIOCTL SPKUNMUTE
+AUDIOCTL SPKVOL 5
+
+# Record audio in S16_LE, 48 kHz WAV and pipe to speaker
+arecord -D hw:0,0 -r 48000 -f S16_LE -t wav | aplay -D hw:1 &
+
+# Forked process
+# Run `pkill arecord` to stop this example payload
+```
+
+---
+
+### Record to WAV
+
+This example records microphone audio to a WAV file inside the loot directory.
+
+```sh showLineNumbers
+readonly LOOT_DIR=/root/loot.d/record2wav
+
+mkdir -p $LOOT_DIR
+
+# Auto-increment filename
+COUNT=$(($(ls -1 $LOOT_DIR/*.wav 2>/dev/null | wc -l) + 1))
+
+# Enable microphone at maximum sensitivity
+AUDIOCTL MICUNMUTE
+AUDIOCTL MICVOL 24
+
+# Indicate recording state (dim white blink)
+LED -c151515 -l -b -s 1000000
+
+# Record audio
+arecord -D hw:0,0 -r 48000 -f S16_LE -t wav \
+  $LOOT_DIR/record2wav_$COUNT.wav
+
+# Recording finished
+LED -c FF0000
+```
+
+---
+
+## Notes
+
+* Volume ranges depend on codec configuration:
+
+  * MIC (ADC): **0–24**
+  * Speaker (DAC): **0–32**
+* `arecord` blocks until terminated; use `&` or signals for background operation
+* Combine with `LED` or `shmled` to provide visible recording indicators
+* Audio payloads may expose privacy-sensitive data — **use responsibly**
+

@@ -1,0 +1,65 @@
+---
+asIndexPage: true
+title: Basic
+---
+
+import { Cards } from 'nextra/components'
+
+# Basic
+
+This section contains **foundational payload building blocks** for Lichee-Jack.
+
+The **Basic** category focuses on small, composable primitives that are commonly used by more advanced payloads. These examples are intentionally minimal, script-friendly, and designed to work reliably in constrained environments.
+
+Typical goals of Basic payloads:
+
+* Provide **visual or audio feedback**
+* Validate hardware functionality
+* Serve as **building blocks** for larger attack chains
+* Demonstrate correct usage patterns for core utilities
+
+---
+
+## LED
+
+LED payloads provide **immediate visual feedback** using the onboard RGB LED.
+
+They are commonly used to:
+
+* Indicate device state (booting, armed, running, error)
+* Signal payload progress or success
+* Run background animations during long-running tasks
+
+The LED interface is **exclusive**: starting a new LED or `shmled` instance will terminate the previous one, ensuring deterministic behavior.
+
+<Cards num={1}>
+  <Cards.Card
+    arrow
+    title="LED"
+    href="/docs/payloads/1_basic/1_LED"
+  />
+</Cards>
+
+---
+
+## Audio
+
+Audio payloads demonstrate how to interact with the onboard **microphone and speaker** using standard ALSA tools combined with `AUDIOCTL`.
+
+They can be used to:
+
+* Capture environmental audio
+* Provide audible feedback
+* Implement live monitoring or recording payloads
+
+Audio examples emphasize **simple shell pipelines** that integrate cleanly with LED indicators and payload logic.
+
+<Cards num={1}>
+  <Cards.Card
+    arrow
+    title="Audio"
+    href="/docs/payloads/1_basic/2_audio"
+  />
+</Cards>
+
+

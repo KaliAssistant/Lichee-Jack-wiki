@@ -1,0 +1,136 @@
+---
+asIndexPage: true
+---
+
+import { Cards } from 'nextra/components'
+
+# Payloads
+
+This section documents **how to learn, build, and develop payloads** for **Lichee-Jack**.
+
+Payloads are small, task-focused scripts or bundles that define what Lichee-Jack does when plugged into a target system or network. They can control USB gadget roles, run network tools, automate attacks, or simply perform diagnostics and demos.
+
+You can find real-world examples, templates, and helper functions in the official payload repository:
+
+**Lichee-Jack Payloads Repository**
+
+<Cards num={1}>
+  <Cards.Card arrow title="Lichee-Jack-payloads (GitHub)" href="https://github.com/KaliAssistant/Lichee-Jack-payloads">
+  </Cards.Card>
+</Cards>
+
+---
+
+## What is a Payload?
+
+A payload typically consists of:
+
+* A **main entry script** (usually shell-based)
+* Optional helper scripts or binaries
+* Configuration files (if needed)
+* LED / status feedback logic
+
+Payloads are executed by **jackstart** depending on:
+
+* Hardware switch position
+* USB gadget mode
+* Boot or plug-in events
+
+This design keeps payloads **simple, auditable, and hackable**.
+
+---
+
+## Basic
+
+Basic payloads demonstrate the **core capabilities** of Lichee-Jack.
+
+These examples are ideal for:
+
+* First-time users
+* Understanding payload structure
+* Learning how USB gadget modes work
+
+Typical examples include:
+
+* USB Ethernet bring-up
+* Simple HID injection
+* LED status control
+* File drop or log collection
+
+<Cards num={1}>
+  <Cards.Card arrow title="Basic" href="/docs/payloads/1_basic">
+  </Cards.Card>
+</Cards>
+
+---
+
+## Misc
+
+Misc payloads are **experimental, demo, or testing-focused**.
+
+They may not be optimized for real-world use, but are extremely useful for:
+
+* Prototyping new ideas
+* Hardware validation
+* Debugging USB or network behavior
+* Demonstrating features
+
+Examples may include:
+
+* Stress tests
+* Debug USB gadgets
+* Temporary proof-of-concept scripts
+
+<Cards num={1}>
+  <Cards.Card arrow title="Misc" href="/docs/payloads/2_misc">
+  </Cards.Card>
+</Cards>
+
+---
+
+## Recon
+
+Recon payloads focus on **network discovery and intelligence gathering**.
+
+These payloads are designed to run automatically when Lichee-Jack is connected to a network, making them useful for:
+
+* Passive reconnaissance
+* Network mapping
+* Target identification
+
+Common techniques include:
+
+* ARP scanning
+* Service enumeration
+* Packet sniffing
+* DNS / DHCP observation
+
+<Cards num={1}>
+  <Cards.Card arrow title="Recon" href="/docs/payloads/3_recon">
+  </Cards.Card>
+</Cards>
+
+---
+
+## Advanced (Coming Soon)
+
+Future documentation will cover more advanced payload topics, such as:
+
+* Multi-stage payloads
+* Conditional execution logic
+* Payload chaining
+* Persistence techniques
+* Custom binaries and cross-compilation
+
+These sections will be added as the ecosystem evolves.
+
+---
+
+## Notes
+
+* All payloads are **open-source** and community-driven
+* Read the source before running any payload
+* **Only use Lichee-Jack on networks and systems you own or are authorized to test**
+
+If you want to contribute payloads, improvements, or documentation, pull requests are always welcome.
+

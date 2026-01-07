@@ -5,6 +5,7 @@ const DOCS_ITEMS: MetaRecord = {
     start: 'Getting Started',
     hardware: '',
     software: '',
+    payloads: '',
     legal: '',
 }
 

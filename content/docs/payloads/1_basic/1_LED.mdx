@@ -1,0 +1,163 @@
+---
+title: LED
+---
+
+# LED
+
+This section documents **basic LED payload usage** for Lichee-Jack.
+
+Lichee-Jack exposes a simple **single-RGB LED control interface** through two userland utilities:
+
+* `LED`    — direct LED controller (forks into background)
+* `shmled` — shared-memory driven LED controller (used by daemons / services)
+
+Both tools share the **same CLI interface and effects**, making them interchangeable depending on your payload design.
+
+Typical use cases:
+
+* Device state indication (booting, payload running, error)
+* Visual feedback during USB gadget operations
+* Background LED animations driven by payload logic
+
+---
+
+## `LED` / `shmled` Quick Reference
+
+```sh
+LED    -c #RRGGBB -i <rgb.bin> [-l] [-b|-d|-r] [-s µs]
+shmled -c #RRGGBB -i <rgb.bin> [-l] [-b|-d|-r] [-s µs]
+```
+
+> [!TIP]
+>
+> If no arguments are provided, the LED will be turned **off**.
+
+---
+
+## Flags Explained
+
+|         Flag | Description                                                  |
+| -----------: | ------------------------------------------------------------ |
+| `-c #RRGGBB` | Set a solid color using a 6‑hex RGB value (`00FF00` = green) |
+|  `-i <file>` | Read raw RGB frames from a binary file (`\xRR\xGG\xBB`)      |
+|         `-l` | Loop mode (repeat indefinitely)                              |
+|         `-b` | Blink effect                                                 |
+|         `-d` | Fade in/out effect                                           |
+|         `-r` | Rainbow effect (HSV → RGB)                                   |
+|      `-s µs` | Delay per frame in **microseconds**                          |
+
+> [!NOTE]
+>
+> Effect flags (`-b -d -r`) are **mutually exclusive**.
+
+---
+
+## Examples
+
+### Blink
+
+```sh showLineNumbers
+# Turn LED off
+LED
+
+# Green blink, 100 ms per frame, loop
+LED -c 00FF00 -l -b -s 100000
+
+# Run for 5 seconds
+sleep 5
+
+# White blink, 1 second per frame
+LED -c FFFFFF -l -b -s 1000000
+```
+
+---
+
+### Fade
+
+```sh showLineNumbers
+# Turn LED off
+LED
+
+# Blue fade, 100 ms per frame
+LED -c 0000FF -l -d -s 100000
+
+sleep 5
+
+# 50% white fade, 1 second per frame
+LED -c 888888 -l -d -s 1000000
+```
+
+---
+
+### Rainbow
+
+```sh showLineNumbers
+# Turn LED off
+LED
+
+# Smooth HSV rainbow animation
+LED -l -r -s 23000
+```
+
+---
+
+### Binary Input (Advanced)
+
+The `-i` option allows you to feed **raw RGB frames** directly into the LED engine.
+
+Each frame consists of **3 bytes**:
+
+```
+\xRR \xGG \xBB
+```
+
+This is useful for:
+
+* Custom patterns
+* Programmatic generation
+* Synchronization with payload logic
+
+#### Example: COP-style flashing pattern
+
+```sh showLineNumbers
+# Generate RGB binary file
+
+gen_cop_bin() {
+  printf "" > /tmp/cop.bin
+
+  # Red blink (3 on, 1 off) x4
+  for i in {1..4}; do
+    printf "\xff\x00\x00\xff\x00\x00\xff\x00\x00\x00\x00\x00" >> /tmp/cop.bin
+  done
+
+  # Blue blink (3 on, 1 off) x4
+  for i in {1..4}; do
+    printf "\x00\x00\xff\x00\x00\xff\x00\x00\xff\x00\x00\x00" >> /tmp/cop.bin
+  done
+}
+
+gen_cop_bin
+
+# Play binary animation, 25 ms per frame
+LED -l -i /tmp/cop.bin -s 25000
+```
+
+---
+
+## `LED` vs `shmled`
+
+| Tool     | Use Case                                              |
+| -------- | ----------------------------------------------------- |
+| `LED`    | Simple payload scripts, one-shot effects              |
+| `shmled` | Long-running daemons, shared-memory driven state LEDs |
+
+> Internally, `shmled` acts as the **exclusive LED writer**. When a new `LED` or `shmled` instance starts, any existing `shmled` process will be **terminated**, ensuring only one active LED controller at a time.
+
+---
+
+## Notes
+
+* `LED` **forks into background** by default — payload scripts may exit while LED continues running
+* Always explicitly turn the LED off at payload end if required
+* Microsecond delays (`-s`) allow smooth animations even on low-power SoCs
+
