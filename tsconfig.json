@@ -28,8 +28,11 @@
       "@/*": [
         "./*"
       ],
-      "@components/*": ["./components/*"]
-    }
+      "@components/*": [
+        "./components/*"
+      ]
+    },
+    "strictNullChecks": false
   },
   "include": [
     "next-env.d.ts",

@@ -55,17 +55,12 @@ export default async function RootLayout({children}) {
 
     return (
         <html
-            // Not required, but good for SEO
             lang="en"
-            // Required to be set
             dir="ltr"
-            // Suggested by `next-themes` package https://github.com/pacocoursey/next-themes#with-app
             suppressHydrationWarning
         >
-        <Head
-            // ... Your additional head options
-        >
-            // <link rel="shortcut icon" href={`${basePath}/images/general/icon.svg`}/>
+        <Head>
+            <link rel="shortcut icon" href={`${basePath}/images/general/icon.svg`}/>
             {/* Your additional tags should be passed as `children` of `<Head>` element */}
         </Head>
         <body>
