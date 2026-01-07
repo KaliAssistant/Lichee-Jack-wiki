@@ -2,3 +2,38 @@
 asIndexPage: true
 title: Recon
 ---
+
+import { Cards } from 'nextra/components'
+
+# Recon
+
+This section documents **reconnaissance payloads** for Lichee-Jack.
+
+Recon payloads focus on **network discovery, topology mapping, and information gathering** once the device is connected to a target network. They are usually executed after link-up and DHCP acquisition, and commonly combine:
+
+* Network interface control (`NETMODE`, `end0`)
+* Active scanning tools (e.g. `nmap`)
+* Passive discovery (LLDP, routing info)
+* Loot collection and optional exfiltration
+* LED status feedback for each stage
+
+> [!WARNING]
+>
+> Recon payloads can generate significant network traffic. Use only on networks you are authorized to test.
+
+---
+
+## Nmap
+
+Network discovery and port-scanning payloads based on **nmap**.
+Used for fast host detection, service enumeration, and basic OS fingerprinting
+after Lichee-Jack is plugged into a target network.
+
+<Cards num={1}>
+  <Cards.Card
+    arrow
+    title="Nmap"
+    href="/docs/payloads/3_recon/1_nmap"
+  />
+</Cards>
+

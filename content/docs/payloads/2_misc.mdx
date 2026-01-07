@@ -2,3 +2,52 @@
 asIndexPage: true
 title: Misc
 ---
+
+import { Cards } from 'nextra/components'
+
+# Misc
+
+This section contains **miscellaneous and experimental payloads** for Lichee-Jack.
+
+Unlike *Basic* payloads, items in **Misc** are usually:
+
+* Higher-level or more opinionated
+* Built by composing multiple primitives (LED, Audio, USB, Network)
+* Demonstration-oriented, fun, or situational
+* Not always required for core operation
+
+These payloads are still fully functional, but are primarily intended as **examples, references, or inspiration** for custom payload development.
+
+---
+
+## Music Player
+
+The Music Player payload demonstrates how Lichee-Jack can be used as a **standalone audio playback device**.
+
+It typically combines:
+
+* `AUDIOCTL` for speaker control
+* SoX playback tools
+* Optional LED indicators for playback state
+* Simple playlist or file-based audio selection
+
+This payload is useful for:
+
+* Verifying audio output hardware
+* Demo or prank-style payloads
+* Learning how to integrate audio control into longer-running payload logic
+
+<Cards num={1}>
+  <Cards.Card
+    arrow
+    title="Music Player"
+    href="/docs/payloads/2_misc/1_music_player"
+  />
+</Cards>
+
+---
+
+> [!TIP]
+>
+>  Misc payloads are a good place to prototype ideas before promoting them into **Basic** or **Advanced** categories.
+

@@ -4,4 +4,156 @@ title: Music Player
 
 # Music Player
 
+The **Music Player** payload turns Lichee-Jack into a simple **standalone audio player**.
+
+It continuously plays music files from storage and allows the user to **skip tracks using the USER button** (exposed as a Linux input event device).
+
+This payload is mainly intended as:
+
+* A demonstration of **audio playback** on Lichee-Jack
+* An example of **input-event driven control** inside payloads
+* A reference for combining **Audio + LED + GPIO / input devices**
+
+---
+
+## Features
+
+* Plays `.opus` audio files in a directory (sorted order)
+* Uses **SoX → ALSA** for decoding and playback
+* USER button (`/dev/input/event0`) skips to the next track
+* LED feedback during initialization and playback
+* Loops playlist indefinitely
+
+---
+
+## Requirements
+
+* Audio files stored locally (recommended format: `.opus`)
+* `sox` installed with ALSA support
+* Working ALSA output device (`hw:1,0` by default)
+* USER button exposed as an input device (`gpio-keys`)
+
+---
+
+## Directory Layout Example
+
+```
+/root/data/music/
+└── demo/
+    ├── track01.opus
+    ├── track02.opus
+    └── track03.opus
+```
+
+---
+
+## Payload Script
+
+```sh showLineNumbers
+#!/bin/bash
+#
+# Title:      Lichee-Jack Music Player with Skip Button
+# Author:     KaliAssistant <work.kaliassistant.github@gmail.com>
+# Version:    1.0
+#
+# Controls:
+#   USER button (gpio-keys → /dev/input/event0): Skip track
+#
+# Audio pipeline:
+#   SoX → ALSA hw:1,0
+
+MUSIC_DIR="/root/data/music/MUSIC_DIR_TO_PLAY"
+INPUT_EVENT="/dev/input/event0"
+ALSA_DEV="hw:1,0"
+
+# -----------------------------
+# Hardware / Audio Init
+# -----------------------------
+
+# LED: yellow blink during init
+LED -c FFFF00 -l -b -s 100000
+
+# Wait for ALSA PCM device
+until [ -e /dev/snd/pcmC1D0p ]; do
+    sleep 0.2
+done
+
+# Wake codec once
+aplay -D hw:1,0 /dev/zero -f S16_LE &>/dev/null &
+sleep 0.5
+pkill aplay &>/dev/null
+
+# LED: rainbow when ready
+LED -l -r -s 23000
+
+# -----------------------------
+
+# Set speaker volume
+AUDIOCTL SPKVOL 5
+sleep 1
+
+# Load playlist
+mapfile -t SONGS < <(find "$MUSIC_DIR" -type f -iname "*.opus" | sort)
+if [[ ${#SONGS[@]} -eq 0 ]]; then
+    echo "No music files found in $MUSIC_DIR"
+    exit 1
+fi
+
+INDEX=0
+PLAY_PID=0
+
+# Play current song
+play_song() {
+    local song="${SONGS[$INDEX]}"
+    echo -e "\nNow playing: $(basename "$song")"
+
+    sox "$song" -t alsa "$ALSA_DEV" &
+    PLAY_PID=$!
+}
+
+# Detect button press (EV_KEY, value = 1)
+button_pressed() {
+    timeout 3 dd if="$INPUT_EVENT" bs=24 count=1 2>/dev/null \
+        | hexdump -v -e '8/1 "%02x "' \
+        | grep -q "01 01 00"
+}
+
+# -----------------------------
+# Main Loop
+# -----------------------------
+
+while true; do
+    play_song
+
+    while kill -0 "$PLAY_PID" 2>/dev/null; do
+        if button_pressed; then
+            echo -e "\nSkip button pressed!"
+            kill "$PLAY_PID" 2>/dev/null
+            sleep 1
+            break
+        fi
+        sleep 1
+    done
+
+    INDEX=$(( (INDEX + 1) % ${#SONGS[@]} ))
+done
+```
+
+---
+
+## Notes
+
+* `.opus` is recommended for **small size and good quality**, but SoX supports many formats
+* Input handling is intentionally simple and blocking-safe
+* LED usage is optional but strongly recommended for user feedback
+* This payload runs indefinitely until terminated
+
+---
+
+## Ideas for Extension
+
+* Add **long-press** detection (pause / stop)
+* Support playlists or random shuffle
+* Synchronize LED color with track index or BPM
+* Add USB Mass Storage mode to drop music dynamically
 
