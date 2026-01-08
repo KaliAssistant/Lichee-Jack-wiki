@@ -393,6 +393,8 @@ with Keyboard() as k:
     sleep(2)
 EOF
 
+USBMODE HID
+
 LED -c FFFF00 -lds 100000
 
 while [ "$(cat /sys/class/udc/*/state)" != "configured" ]; do
