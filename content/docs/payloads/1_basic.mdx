@@ -113,7 +113,17 @@ NETMODE examples emphasize **pre-flight checks**, deterministic mode switching, 
 
 ## USBMODE
 
-...
+USBMODE payloads demonstrate how to **dynamically control USB gadget behavior** on Lichee-Jack by switching the operating mode of the USB controller at runtime.
+
+They are commonly used to:
+
+* Enable or disable USB gadget functionality safely
+* Switch between HID, ECM/RNDIS, Mass Storage, or composite modes
+* Re-enumerate cleanly to ensure host-side detection
+* Coordinate USB role changes with LEDs and payload stages
+* Automate host interaction workflows (keystrokes, networking, file drops)
+
+USBMODE examples emphasize **clean detach/attach cycles**, predictable enumeration, and tight integration with payload logic, indicators, and follow-up actions.
 
 <Cards num={1}>
   <Cards.Card
