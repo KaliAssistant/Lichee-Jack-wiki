@@ -1,0 +1,122 @@
+---
+title: LOOT_DIR
+---
+
+# LOOT_DIR
+
+This section demonstrates common **loot counting and directory sequencing** patterns used in Lichee-Jack payloads.
+
+These techniques ensure payload output is:
+
+* Non-destructive
+* Predictable
+* Easy to enumerate and review
+
+## `wc -l` count
+
+This pattern uses a **file count** to generate sequential filenames inside a single loot directory.
+
+```sh showLineNumbers
+readonly LOOT_DIR=/root/loot.d/some-loot
+
+mkdir -p $LOOT_DIR
+COUNT=$(($(ls -l $LOOT_DIR/*.txt | wc -l)+1))
+
+someExec -foo arg -o $LOOT_DIR/result_$COUNT.txt
+```
+
+This approach is useful for:
+
+* Simple payloads
+* Flat directory layouts
+* One-file-per-run outputs
+
+Note: this method assumes matching files already exist and may require additional checks when the directory is empty.
+
+## Next loot count
+
+This pattern allocates a **new numbered loot directory** for each payload execution.
+
+Instead of counting files, it scans existing directories, determines the highest index, and creates the next directory in sequence.
+
+```sh showLineNumbers
+LOOT_BASEDIR=/root/loot.d/some-loot
+
+function next_loot_dir() {
+  local base="${LOOT_BASEDIR}"
+  # Ensure base dir exists
+  mkdir -p "$base"
+
+  # Extract basename: /root/loot.d/some-loot -> some-loot
+  local prefix
+  prefix="$(basename "$base")"
+
+  local max=0
+  local n
+
+  shopt -s nullglob
+  for d in "$base"/"$prefix"-*; do
+    # ensure it's a directory
+    [[ -d "$d" ]] || continue
+    n="${d##*-}"
+    [[ "$n" =~ ^[0-9]+$ ]] || continue
+    (( n > max )) && max="$n"
+  done
+  shopt -u nullglob
+
+  local next=$((max + 1))
+  local newdir="$base/$prefix-$next"
+
+  mkdir "$newdir"
+  echo "$newdir"
+}
+
+CURRENT_LOOTDIR=$(next_loot_dir)
+
+someExec -foo arg -o $CURRENT_LOOTDIR/result.txt
+```
+
+This method is recommended for:
+
+* Repeated payload execution
+* Payloads producing multiple files
+* Long-term loot retention and analysis
+
+Each run is isolated in its own directory, simplifying cleanup and post-processing.
+
+## Timestamp
+
+This pattern uses **system time** to name loot files or directories, making each payload run naturally unique and time-correlated.
+
+It is especially useful when:
+
+* Precise execution time matters
+* Logs need to be correlated with other systems
+* Sequential numbering is unnecessary
+
+> [!IMPORTANT]
+>
+> Make sure the RTC and system time are current and **NTP synchronization has succeeded**, or timestamps will be incorrect.
+>
+> Lichee-Jack does **not** have a battery-backed RTC, so system time must be updated via NTP when internet access is available.
+
+```sh showLineNumbers
+# Base loot directory
+LOOT_BASEDIR=/root/loot.d/some-loot
+
+# Ensure base directory exists
+mkdir -p "$LOOT_BASEDIR"
+
+# Generate timestamp (YYYY-MM-DD_HH-MM-SS)
+TS="$(date '+%Y-%m-%d_%H-%M-%S')"
+
+# Create timestamped loot directory
+LOOT_DIR="$LOOT_BASEDIR/loot_$TS"
+mkdir "$LOOT_DIR"
+
+# Example payload output
+someExec -foo arg -o "$LOOT_DIR/result.txt"
+```
+
+Timestamp-based naming avoids collisions entirely and works well alongside directory-based loot isolation.
+

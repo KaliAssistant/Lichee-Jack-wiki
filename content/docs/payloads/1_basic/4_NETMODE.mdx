@@ -1,0 +1,206 @@
+---
+title: NETMODE
+---
+
+# NETMODE
+
+This page documents **basic NETMODE usage**, common preparation steps, and practical examples for switching Lichee-Jack network behavior at runtime.
+
+NETMODE controls how the primary Ethernet interface (`end0`) behaves, allowing payloads to dynamically act as a **client**, **server**, or **auto-detecting** network device.
+
+## Pre NETMODE
+
+Before invoking `NETMODE`, payloads should ensure the network stack and interface are fully ready. Skipping these checks may lead to race conditions or failed configuration.
+
+### Operstate
+
+Wait until the Ethernet interface reports an active operational state.
+
+```sh showLineNumbers
+while [ "$(cat /sys/class/net/end0/operstate)" = "down" ]; do
+  sleep 1
+done
+```
+
+### Systemd
+
+Ensure NetworkManager is fully started before applying any NETMODE changes.
+
+```sh showLineNumbers
+until systemctl -q is-active NetworkManager.service
+do
+  sleep 1
+done
+```
+
+### Unified wait helper
+
+This helper combines **link state** and **NetworkManager readiness** checks into a single reusable function.
+
+```sh showLineNumbers
+function wait_ifup() {
+  LED -c FFFF00 -lds 100000
+  while [ "$(cat /sys/class/net/end0/operstate)" = "down" ]; do
+    sleep 1
+  done
+
+  until systemctl -q is-active NetworkManager.service
+  do
+    sleep 1
+  done
+}
+
+wait_ifup
+sleep 0.3
+NETMODE DHCP_CLIENT
+```
+
+## DHCP_CLIENT
+
+Configures Lichee-Jack as a **DHCP client**, suitable for plugging into an existing network to obtain an IP address automatically.
+
+```sh showLineNumbers
+function setup() {
+
+  LED -c FF00FF
+
+  wait_ifup
+  sleep 0.3
+  NETMODE DHCP_CLIENT
+
+  LED -c FFFF00 -lbs 100000 # WAIT DHCP
+  while [ -z "$SUBNET" ]; do
+    sleep 1 && SUBNET=$(ip addr | grep -i end0 | grep -i inet | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}[\/]{1}[0-9]{1,2}")
+  done
+  GATEWAY_IP=$(ip route show default dev end0 | awk '$1=="default"{for(i=1;i<=NF;i++) if($i=="via") print $(i+1)}')
+}
+```
+
+## DHCP_SERVER
+
+Sets Lichee-Jack to act as a **DHCP server**, commonly used for rogue APs, captive environments, or isolated attack networks.
+
+### udhcpd config
+
+Example `udhcpd` configuration bound to `end0`:
+
+```conf showLineNumbers filename="/root/config/udhcpd/netmode-end0.conf"
+# Sample udhcpd configuration file
+start		10.11.22.10
+end		10.11.22.254
+interface	end0
+pidfile	/var/run/udhcpd_netmode-end0.pid
+lease_file	/var/lib/misc/udhcpd_netmode-end0.leases
+option	subnet	255.255.255.0
+opt	router	10.11.22.1
+option	lease	864000
+```
+
+### setup
+
+```sh showLineNumbers
+function wait_ifup() {
+  LED -c FFFF00 -lds 100000
+  while [ "$(cat /sys/class/net/end0/operstate)" = "down" ]; do
+    sleep 1
+  done
+
+  until systemctl -q is-active NetworkManager.service
+  do
+    sleep 1
+  done
+}
+
+wait_ifup
+sleep 0.3
+NETMODE DHCP_SERVER
+```
+
+### leases file
+
+Inspect active DHCP leases:
+
+```sh
+dumpleases /var/lib/misc/udhcpd_netmode-end0.leases
+```
+
+## AUTO
+
+AUTO mode automatically selects **DHCP client or server** behavior based on link conditions and running services.
+
+```sh showLineNumbers
+function wait_ifup() {
+  LED -c FFFF00 -lds 100000
+  while [ "$(cat /sys/class/net/end0/operstate)" = "down" ]; do
+    sleep 1
+  done
+
+  until systemctl -q is-active NetworkManager.service
+  do
+    sleep 1
+  done
+}
+
+wait_ifup
+sleep 0.3
+NETMODE AUTO
+
+if systemctl -q is-active udhcpd@netmode-end0.service
+then
+  dumpleases /var/lib/misc/udhcpd_netmode-end0.leases
+else
+  while [ -z "$SUBNET" ]; do
+    sleep 1 && SUBNET=$(ip addr | grep -i end0 | grep -i inet | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}[\/]{1}[0-9]{1,2}")
+  done
+  GATEWAY_IP=$(ip route show default dev end0 | awk '$1=="default"{for(i=1;i<=NF;i++) if($i=="via") print $(i+1)}')
+fi
+```
+
+## STATIC
+
+Forces a **static IP configuration** using NetworkManager defaults.
+
+```sh showLineNumbers
+function wait_ifup() {
+  LED -c FFFF00 -lds 100000
+  while [ "$(cat /sys/class/net/end0/operstate)" = "down" ]; do
+    sleep 1
+  done
+
+  until systemctl -q is-active NetworkManager.service
+  do
+    sleep 1
+  done
+}
+
+wait_ifup
+sleep 0.3
+NETMODE STATIC
+```
+
+## CUSTOM
+
+CUSTOM mode applies a user-defined NetworkManager profile.
+
+```ini showLineNumbers filename="/root/config/NetworkManager/custom.nmconnection"
+[connection]
+id=static
+uuid=<uuid4>
+type=ethernet
+autoconnect=false
+interface-name=end0
+
+[ipv4]
+address1=172.16.80.1/24
+method=manual
+
+[ipv6]
+addr-gen-mode=stable-privacy
+method=auto
+never-default=true
+```
+
+> [!IMPORTANT]
+>
+> Make sure the `.nmconnection` file permissions are set to **600**, or NetworkManager will refuse to load it.
+

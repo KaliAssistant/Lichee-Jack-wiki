@@ -62,4 +62,64 @@ Audio examples emphasize **simple shell pipelines** that integrate cleanly with 
   />
 </Cards>
 
+---
+
+## LOOT_DIR
+
+LOOT_DIR payloads demonstrate how to work with **directories, files, and loot storage** on Lichee-Jack in a safe and repeatable way.
+
+They are commonly used to:
+
+* Create and manage loot directories
+* Store payload output and captured data
+* Organize results by payload or execution time
+* Support later analysis or exfiltration workflows
+
+LOOT_DIR examples focus on **simple shell patterns** for directory creation, naming, and counting, ensuring payloads never overwrite existing data and remain easy to audit.
+
+<Cards num={1}>
+  <Cards.Card
+    arrow
+    title="LOOT_DIR"
+    href="/docs/payloads/1_basic/3_LOOT_DIR"
+  />
+</Cards>
+
+---
+
+## NETMODE
+
+NETMODE payloads demonstrate how to **dynamically control network behavior** on Lichee-Jack by switching the operating mode of the primary Ethernet interface.
+
+They are commonly used to:
+
+* Bring interfaces up safely before network actions
+* Act as a DHCP client on existing networks
+* Act as a DHCP server for isolated or rogue setups
+* Automatically select the appropriate network role
+* Apply static or custom NetworkManager configurations
+
+NETMODE examples emphasize **pre-flight checks**, deterministic mode switching, and clean integration with payload logic, LEDs, and follow-up actions.
+
+<Cards num={1}>
+  <Cards.Card
+    arrow
+    title="NETMODE"
+    href="/docs/payloads/1_basic/4_NETMODE"
+  />
+</Cards>
+
+---
+
+## USBMODE
+
+...
+
+<Cards num={1}>
+  <Cards.Card
+    arrow
+    title="USBMODE"
+    href="/docs/payloads/1_basic/5_USBMODE"
+  />
+</Cards>
 
